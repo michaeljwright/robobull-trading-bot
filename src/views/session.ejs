@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<head lang="en">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <title>Trading Terminal</title>
+    <link rel="stylesheet" href="https://unpkg.com/terminal.css@0.7.2/dist/terminal.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/flexboxgrid@6.3.1/dist/flexboxgrid.css">
+    <link rel="stylesheet" type="text/css" href="/assets/css/main.css" />
+</head>
+<body class="terminal">
+  <div>
+    <div class="row">
+      <div class="col-sm-12 col-md-2 col-lg-2">
+        <div class="logo terminal-prompt"><a href="#">Trading Terminal</a></div>
+        <div id="clock">
+        </div>
+      </div>
+      <div class="col-sm-12 col-md-10 col-lg-10">
+        <div class="terminal-nav">
+          <nav class="terminal-menu">
+            <ul>
+              <% if (!session.isBacktest) { %>
+                <li><a class="menu-item" data-id="<%= session._id %>" href="#modal-halt-trading" id="halt-trading">Halt Live Trading?</a></li>
+              <% } else{ %>
+                <li><a class="menu-item" data-id="" href="#" id="halt-trading">Back Testing</a></li>
+              <% } %>
+              <li><a class="menu-item" href="#"><button class="btn btn-default btn-ghost"><strong>Starting Capital: $<span class="white-color" id="startingCapital">100000</span></strong></button></a></li>
+              <li><a class="menu-item" href="#"><button class="btn btn-primary btn-ghost"><strong>Balance: $<span class="white-color" id="balance">100000</span></strong></button></a></li>
+              <li><a class="menu-item" href="#"><button class="btn btn-primary"><strong>ROI: <span class="white-color" id="roi">0%</span></strong></button></a></li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <hr />
+
+    <div class="row">
+      <div class="col-sm-12 col-md-12 col-lg-12">
+        <div class="terminal-card">
+          <header>Subscribed Stocks (<span id="stocks-current"></span>) e.g. Symbol (Signal) Weighting</header>
+          <div id="stocks-list">
+          </div>
+        </div>
+        <hr />
+      </div>
+
+      <div class="col-sm-12 col-md-6 col-lg-6">
+        <div class="terminal-card">
+          <header class="primary-bg">Current Positions (<span id="positions-current"></span>)</header>
+          <div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Symbol</th>
+                  <th>Qty</th>
+                  <th>Price</th>
+                  <th>Amount</th>
+                  <th>Profit</th>
+                </tr>
+              </thead>
+              <tbody id="positions-list">
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <hr />
+
+      </div>
+
+      <div class="col-sm-12 col-md-6 col-lg-6">
+        <div class="terminal-card">
+          <header class="default-bg">Order History (<span id="orders-current"></span>)</header>
+          <div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Date/Time</th>
+                  <th>Symbol</th>
+                  <th>Side</th>
+                  <th>Qty</th>
+                  <th>Price</th>
+                  <th>Amount</th>
+                  <th>ROI</th>
+                </tr>
+              </thead>
+              <tbody id="orders-list">
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <hr />
+      </div>
+
+    </div>
+
+    <div id="modal-halt-trading">
+      <div class="overlay"></div>
+      <div class="modal-content">
+        <div class="row">
+          <div class="col-sm-12 col-md-12 col-lg-12">
+            <div class="terminal-card">
+              <header>Halt Live Trading <a href="#" class="close" id="modal-halt-trading-close">&times;</a></header>
+              <div>
+                <table>
+                  <tbody>
+                    <br />
+                    <p class="terminal-prompt" id="halt-trading-msg">Attempting to halt live trading.. Please wait</p>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.14.1/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/assets/js/main.js"></script>
+</body>
+</html>
