@@ -1,0 +1,119 @@
+.terminal {
+  margin: 15px;
+}
+.logo a {
+  font-size: 14px !important;
+}
+table {
+  margin: 0;
+}
+hr {
+  margin: 1em 0;
+}
+.white-color {
+  color: #e8e9ed !important;
+}
+.primary-color {
+  color: #62c4ff !important;
+}
+.default-color {
+  color: #e8e9ed !important;
+}
+.primary-bg {
+  background: #62c4ff !important;
+}
+.default-bg {
+  background: #e8e9ed !important;
+}
+.profit-bg {
+  border-color: #1effbc !important;
+  background: #1effbc !important;
+  color: #333 !important;
+  padding: 4px 4px;
+  margin: 4px 0px 0px 4px;
+}
+.loss-bg {
+  border-color: #f87666 !important;
+  background: #f87666 !important;
+  color: #333 !important;
+  padding: 4px 4px;
+  margin: 4px 0px 0px 4px;
+}
+.border-grey {
+  border-color: var(--secondary-color) !important;
+  color: var(--secondary-color) !important;
+  padding: 4px 4px;
+  margin: 4px 0px 0px 4px;
+}
+
+#modal-halt-trading {
+  left: 50%;
+  margin: -250px 0 0 -32%;
+  opacity: 0;
+  position: absolute;
+  top: -50%;
+  visibility: hidden;
+  width: 65%;
+  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+  transition: all 0.4s ease-in-out;
+  -moz-transition: all 0.4s ease-in-out;
+  -webkit-transition: all 0.4s ease-in-out;
+}
+
+#modal-halt-trading:target {
+  opacity: 1;
+  top: 50%;
+  visibility: visible;
+}
+
+#modal-halt-trading .modal-content {
+  background: var(--background-color);
+  position: relative;
+  z-index: 20;
+}
+
+#modal-halt-trading .overlay {
+  background-color: #000;
+  background: rgba(0, 0, 0, 0.8);
+  height: 100%;
+  left: 0;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 10;
+}
+
+.close {
+  visibility: visible;
+  float: right;
+  margin-top: -2px;
+  margin-right: 3px;
+  padding: 0px 4px;
+  border: 1px solid var(--invert-font-color);
+  color: var(--invert-font-color) !important;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+:root {
+  --global-font-size: 12px;
+  --global-line-height: 1.4em;
+  --global-space: 10px;
+  --font-stack: Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono,
+    Bitstream Vera Sans Mono, Courier New, monospace, serif;
+  --mono-font-stack: Menlo, Monaco, Lucida Console, Liberation Mono,
+    DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, serif;
+  --background-color: #192035; /* 20273E lighter */
+  --font-color: #e8e9ed;
+  --invert-font-color: #222225;
+  --secondary-color: #a3abba;
+  --tertiary-color: #a3abba;
+  --primary-color: #62c4ff;
+  --error-color: #ff3c74;
+  --progress-bar-background: #3f3f44;
+  --progress-bar-fill: #62c4ff;
+  --code-bg-color: #3f3f44;
+  --input-style: solid;
+  --display-h1-decoration: none;
+}
