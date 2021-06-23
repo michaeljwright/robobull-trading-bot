@@ -1,0 +1,455 @@
+{
+  "thresholdToBuy": 35,
+  "thresholdToSell": 25,
+  "useStandardAlgos": false,
+  "restrictons": [
+    {
+      "type": "movingAverage",
+      "side": "buy",
+      "threshold": 5
+    }
+  ],
+  "thresholds": {
+    "SMA": {
+      "description": "Simple Moving Average",
+      "type": "movingAverage",
+      "enabled": true,
+      "weighting": 10,
+      "periods": [
+        {
+          "name": "smaPlot1",
+          "hasOpen": false,
+          "hasClose": false,
+          "hasHigh": false,
+          "hasLow": false,
+          "hasVolume": false,
+          "hasFormat": false,
+          "period": 10
+        },
+        {
+          "name": "smaPlot2",
+          "hasOpen": false,
+          "hasClose": false,
+          "hasHigh": false,
+          "hasLow": false,
+          "hasVolume": false,
+          "hasFormat": false,
+          "period": 42
+        }
+      ],
+      "conditions": [
+        {
+          "signal": "buy",
+          "compareType": "array",
+          "compareAttribute": 0,
+          "againstType": "array",
+          "againstAttribute": 1,
+          "operator": ">"
+        },
+        {
+          "signal": "sell",
+          "compareType": "array",
+          "compareAttribute": 0,
+          "againstType": "array",
+          "againstAttribute": 1,
+          "operator": "<"
+        }
+      ]
+    },
+    "EMA": {
+      "description": "Exponential Moving Average",
+      "type": "movingAverage",
+      "enabled": true,
+      "weighting": 5,
+      "periods": [
+        {
+          "name": "emaPlot1",
+          "hasOpen": false,
+          "hasClose": false,
+          "hasHigh": false,
+          "hasLow": false,
+          "hasVolume": false,
+          "hasFormat": false,
+          "period": 12
+        },
+        {
+          "name": "emaPlot2",
+          "hasOpen": false,
+          "hasClose": false,
+          "hasHigh": false,
+          "hasLow": false,
+          "hasVolume": false,
+          "hasFormat": false,
+          "period": 26
+        }
+      ],
+      "conditions": [
+        {
+          "signal": "buy",
+          "compareType": "array",
+          "compareAttribute": 0,
+          "againstType": "array",
+          "againstAttribute": 1,
+          "operator": ">"
+        },
+        {
+          "signal": "sell",
+          "compareType": "array",
+          "compareAttribute": 0,
+          "againstType": "array",
+          "againstAttribute": 1,
+          "operator": "<"
+        }
+      ]
+    },
+    "WMA": {
+      "description": "Weighted Moving Average",
+      "type": "movingAverage",
+      "enabled": true,
+      "weighting": 5,
+      "periods": [
+        {
+          "name": "wmaPlot1",
+          "hasOpen": false,
+          "hasClose": false,
+          "hasHigh": false,
+          "hasLow": false,
+          "hasVolume": false,
+          "hasFormat": false,
+          "period": 5
+        },
+        {
+          "name": "wmaPlot2",
+          "hasOpen": false,
+          "hasClose": false,
+          "hasHigh": false,
+          "hasLow": false,
+          "hasVolume": false,
+          "hasFormat": false,
+          "period": 12
+        }
+      ],
+      "conditions": [
+        {
+          "signal": "buy",
+          "compareType": "array",
+          "compareAttribute": 0,
+          "againstType": "array",
+          "againstAttribute": 1,
+          "operator": ">"
+        },
+        {
+          "signal": "sell",
+          "compareType": "array",
+          "compareAttribute": 0,
+          "againstType": "array",
+          "againstAttribute": 1,
+          "operator": "<"
+        }
+      ]
+    },
+    "WEMA": {
+      "description": "Wilders Smoothing Moving Average",
+      "type": "movingAverage",
+      "enabled": true,
+      "weighting": 5,
+      "periods": [
+        {
+          "name": "wemaPlot1",
+          "hasOpen": false,
+          "hasClose": false,
+          "hasHigh": false,
+          "hasLow": false,
+          "hasVolume": false,
+          "hasFormat": false,
+          "period": 14
+        },
+        {
+          "name": "wemaPlot2",
+          "hasOpen": false,
+          "hasClose": false,
+          "hasHigh": false,
+          "hasLow": false,
+          "hasVolume": false,
+          "hasFormat": false,
+          "period": 27
+        }
+      ],
+      "conditions": [
+        {
+          "signal": "buy",
+          "compareType": "array",
+          "compareAttribute": 0,
+          "againstType": "array",
+          "againstAttribute": 1,
+          "operator": ">"
+        },
+        {
+          "signal": "sell",
+          "compareType": "array",
+          "compareAttribute": 0,
+          "againstType": "array",
+          "againstAttribute": 1,
+          "operator": "<"
+        }
+      ]
+    },
+    "MACD": {
+      "description": "Moving Average Convergence Divergence",
+      "type": "movingAverage",
+      "enabled": true,
+      "weighting": 5,
+      "periods": [
+        {
+          "name": "macdPlot",
+          "hasOpen": false,
+          "hasClose": false,
+          "hasHigh": false,
+          "hasLow": false,
+          "hasVolume": false,
+          "hasFormat": false,
+          "fastPeriod": 5,
+          "slowPeriod": 8,
+          "signalPeriod": 2
+        }
+      ],
+      "conditions": [
+        {
+          "signal": "buy",
+          "compareType": "object",
+          "compareAttribute": "MACD",
+          "againstType": "object",
+          "againstAttribute": "signal",
+          "operator": ">"
+        },
+        {
+          "signal": "sell",
+          "compareType": "object",
+          "compareAttribute": "MACD",
+          "againstType": "object",
+          "againstAttribute": "signal",
+          "operator": "<"
+        }
+      ]
+    },
+    "Stochastic": {
+      "description": "Stochastic",
+      "type": "oscillator",
+      "enabled": false,
+      "weighting": 5,
+      "periods": [
+        {
+          "name": "stochasticPlot",
+          "hasOpen": false,
+          "hasClose": true,
+          "hasHigh": true,
+          "hasLow": true,
+          "hasVolume": false,
+          "hasFormat": false,
+          "period": 14,
+          "signalPeriod": 2
+        }
+      ],
+      "conditions": [
+        {
+          "signal": "sell",
+          "compareType": "object",
+          "compareAttribute": "d",
+          "againstType": "custom",
+          "againstAttribute": 90,
+          "operator": ">="
+        },
+        {
+          "signal": "buy",
+          "compareType": "object",
+          "compareAttribute": "d",
+          "againstType": "custom",
+          "againstAttribute": 10,
+          "operator": "<"
+        }
+      ]
+    },
+    "RSI": {
+      "description": "Relative Strength Index",
+      "type": "oscillator",
+      "enabled": true,
+      "weighting": 10,
+      "periods": [
+        {
+          "name": "rsiPlot",
+          "hasOpen": false,
+          "hasClose": false,
+          "hasHigh": false,
+          "hasLow": false,
+          "hasVolume": false,
+          "hasFormat": false,
+          "period": 20
+        }
+      ],
+      "conditions": [
+        {
+          "signal": "sell",
+          "compareType": "array",
+          "compareAttribute": 0,
+          "againstType": "custom",
+          "againstAttribute": 70,
+          "operator": ">="
+        },
+        {
+          "signal": "buy",
+          "compareType": "array",
+          "compareAttribute": 0,
+          "againstType": "custom",
+          "againstAttribute": 40,
+          "operator": "<"
+        }
+      ]
+    },
+    "MFI": {
+      "description": "Moneyflow Index",
+      "type": "oscillator",
+      "enabled": true,
+      "weighting": 10,
+      "periods": [
+        {
+          "name": "mfiPlot",
+          "hasOpen": false,
+          "hasClose": true,
+          "hasHigh": true,
+          "hasLow": true,
+          "hasVolume": true,
+          "hasFormat": false,
+          "period": 14
+        }
+      ],
+      "conditions": [
+        {
+          "signal": "sell",
+          "compareType": "array",
+          "compareAttribute": 0,
+          "againstType": "custom",
+          "againstAttribute": 80,
+          "operator": ">="
+        },
+        {
+          "signal": "buy",
+          "compareType": "array",
+          "compareAttribute": 0,
+          "againstType": "custom",
+          "againstAttribute": 20,
+          "operator": "<"
+        }
+      ]
+    },
+    "AwesomeOscillator": {
+      "description": "Awesome Oscillator",
+      "type": "oscillator",
+      "enabled": false,
+      "weighting": 5,
+      "periods": [
+        {
+          "name": "aoPlot",
+          "hasOpen": false,
+          "hasClose": false,
+          "hasHigh": true,
+          "hasLow": true,
+          "hasVolume": false,
+          "hasFormat": true,
+          "fastPeriod": 5,
+          "slowPeriod": 34
+        }
+      ],
+      "conditions": [
+        {
+          "signal": "sell",
+          "compareType": "array",
+          "compareAttribute": 0,
+          "againstType": "custom",
+          "againstAttribute": 0.9,
+          "operator": ">="
+        },
+        {
+          "signal": "buy",
+          "compareType": "array",
+          "compareAttribute": 0,
+          "againstType": "custom",
+          "againstAttribute": 0.1,
+          "operator": "<"
+        }
+      ]
+    },
+    "BollingerBands": {
+      "description": "Bollinger Bands",
+      "type": "oscillator",
+      "enabled": true,
+      "weighting": 5,
+      "periods": [
+        {
+          "name": "bbPlot",
+          "hasOpen": false,
+          "hasClose": false,
+          "hasHigh": false,
+          "hasLow": false,
+          "hasVolume": false,
+          "hasFormat": false,
+          "period": 20,
+          "standardDeviation": 2
+        }
+      ],
+      "conditions": [
+        {
+          "signal": "sell",
+          "compareType": "object",
+          "compareAttribute": "pb",
+          "againstType": "custom",
+          "againstAttribute": 0.8,
+          "operator": ">="
+        },
+        {
+          "signal": "buy",
+          "compareType": "object",
+          "compareAttribute": "pb",
+          "againstType": "custom",
+          "againstAttribute": 0.2,
+          "operator": "<"
+        }
+      ]
+    },
+    "TRIX": {
+      "description": "Triple Exponential Average",
+      "type": "oscillator",
+      "enabled": false,
+      "weighting": 5,
+      "periods": [
+        {
+          "name": "trixPlot1",
+          "hasOpen": false,
+          "hasClose": false,
+          "hasHigh": false,
+          "hasLow": false,
+          "hasVolume": false,
+          "hasFormat": false,
+          "period": 15
+        }
+      ],
+      "conditions": [
+        {
+          "signal": "sell",
+          "compareType": "array",
+          "compareAttribute": 0,
+          "againstType": "custom",
+          "againstAttribute": 0,
+          "operator": ">="
+        },
+        {
+          "signal": "buy",
+          "compareType": "array",
+          "compareAttribute": 0,
+          "againstType": "custom",
+          "againstAttribute": 0,
+          "operator": "<"
+        }
+      ]
+    }
+  }
+}
