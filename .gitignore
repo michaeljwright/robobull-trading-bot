@@ -1,0 +1,28 @@
+# Node modules
+node_modules
+
+package-lock.json
+
+# Mongo temp data
+data
+
+# Test coverage files
+.nyc_output
+
+# Environment variables, never commit this file
+.env
+
+# VSCode & Webstorm history directories
+.history
+.idea
+
+# Other files
+.git
+.DS_Store
+*.parameters.json
+*.env
+/dist/
+lambda.zip
+
+package-lock.json
+npm-debug.log
