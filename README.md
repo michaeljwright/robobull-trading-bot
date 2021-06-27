@@ -28,7 +28,7 @@ _Tip:_ If the US markets are closed then you can use back testing instead.
 
 - Go to [Alpaca](https://alpaca.markets/) and sign up for a free account. We recommend paper trading only for using this project. You don't need to spend real dollars to test this project. Once you have a paper trading account you can create your API key and secret which will be needed in the next step.
 
-- Copy .env-example and rename to .env and then add your Alpaca key (API\*KEY) and secret (SECRET_API_KEY).
+- Copy .env-example and rename to .env and then add your Alpaca key (API_KEY) and secret (SECRET_API_KEY).
   **Important:** keep your key/secret locally, don't commit it or share with anyone.
 
 - Ensure you have edited your settings.json for live/paper trading or back testing
