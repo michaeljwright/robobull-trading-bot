@@ -197,7 +197,18 @@ const addOrderToQueue = (
       type: "market",
       time_in_force: "day"
     });
+
+    console.log(
+      `ORDER: ${side} / ${moment(dateTime).format(
+        "DD/MM/YYYY h:mm:ss a"
+      )} >>>>>>> ${stockData.stocks[stockIndex].symbol} (amount: ${qty *
+        price} / balanceBefore: ${balance} / balanceAfter: ${
+        stockData.portfolio.cash
+      })`
+    );
   }
+
+  console.log("ORDER STARTED!");
 
   // add order to order logs
   stockData = addToOrderLogs(
@@ -226,15 +237,6 @@ const addOrderToQueue = (
 
   // reset signals for all stocks
   stockData = resetPositionsSignals(stockData);
-
-  console.log(
-    `ORDER: ${side} / ${moment(dateTime).format(
-      "DD/MM/YYYY h:mm:ss a"
-    )} >>>>>>> ${stockData.stocks[stockIndex].symbol} (amount: ${qty *
-      price} / balanceBefore: ${balance} / balanceAfter: ${
-      stockData.portfolio.cash
-    })`
-  );
 
   return stockData;
 };
@@ -358,6 +360,7 @@ const addToOrderLogs = (
     signals: stockData.stocks[stockIndex].signals,
     session: stockData.session._id,
     roi: roi,
+    clientOrderId: null,
     processed: stockData.settings.isBacktest ? true : false,
     cancelled: false,
     dateTime: dateTime

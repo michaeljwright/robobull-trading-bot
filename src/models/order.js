@@ -14,6 +14,7 @@ const OrderSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Session"
   },
+  clientOrderId: String,
   balanceAtBuy: { type: Number, default: 0 },
   balanceAtSell: { type: Number, default: 0 },
   roi: { type: Number, default: 0 },
