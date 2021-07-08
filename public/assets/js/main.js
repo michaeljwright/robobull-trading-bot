@@ -141,12 +141,18 @@ socket.on("receive_positions", data => {
 
 socket.on("receive_orders", data => {
   if (data instanceof Array) {
+    while (ordersList.lastElementChild) {
+      ordersList.removeChild(ordersList.lastElementChild);
+    }
+
     data.forEach((order, index) => {
       let row = document.createElement("tr");
       row.setAttribute("id", "order-" + order.symbol);
 
       let dateTime = document.createElement("td");
-      dateTime.textContent = "-";
+      dateTime.textContent = moment(data.dateTime).format(
+        "DD/MM/YYYY h:mm:ss a"
+      );
       row.appendChild(dateTime);
 
       let symbol = document.createElement("td");
@@ -162,7 +168,9 @@ socket.on("receive_orders", data => {
       row.appendChild(qty);
 
       let price = document.createElement("td");
-      price.textContent = parseFloat(order.price).toFixed(2);
+      price.textContent = order.price
+        ? parseFloat(order.price).toFixed(2)
+        : "-";
       row.appendChild(price);
 
       let roiData = parseFloat(order.roi).toFixed(6);
