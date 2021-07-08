@@ -208,8 +208,6 @@ const addOrderToQueue = (
     );
   }
 
-  console.log("ORDER STARTED!");
-
   // add order to order logs
   stockData = addToOrderLogs(
     stockData,
