@@ -201,10 +201,9 @@ const addOrderToQueue = (
     console.log(
       `ORDER: ${side} / ${moment(dateTime).format(
         "DD/MM/YYYY h:mm:ss a"
-      )} >>>>>>> ${stockData.stocks[stockIndex].symbol} (amount: ${qty *
-        price} / balanceBefore: ${balance} / balanceAfter: ${
-        stockData.portfolio.cash
-      })`
+      )} >>>>>>> ${
+        stockData.stocks[stockIndex].symbol
+      } (Price: ${price} / Amount: ${qty * price})`
     );
   }
 
@@ -289,21 +288,21 @@ const checkOrderedTooRecently = (settings, orders, symbol, side, dateTime) => {
  * Calculates ROI from last buy order and current sell order
  *
  * @param {Object} stockData
- * @param {number} stockIndex
  * @param {string} symbol
  * @param {string} side
+ * @param {number} qty
  * @param {number} price
  *
  * @returns {number} roi
  */
-const getOrderRoi = (stockData, stockIndex, side, qty, price) => {
+const getOrderRoi = (stockData, symbol, side, qty, price) => {
   let roi = 0;
   let amount = qty && price ? qty * price : 0;
 
   if (side == "sell" && amount > 0) {
     let orderIndex = _.findLastIndex(stockData.orders, {
       side: "buy",
-      symbol: stockData.stocks[stockIndex].symbol
+      symbol: symbol
     });
 
     if (
@@ -345,7 +344,13 @@ const addToOrderLogs = (
   dateTime
 ) => {
   let amount = qty * price;
-  let roi = getOrderRoi(stockData, stockIndex, side, qty, price);
+  let roi = getOrderRoi(
+    stockData,
+    stockData.stocks[stockIndex].symbol,
+    side,
+    qty,
+    price
+  );
 
   let order = {
     symbol: stockData.stocks[stockIndex].symbol,
@@ -353,8 +358,10 @@ const addToOrderLogs = (
     qty: qty,
     price: price,
     amount: amount,
-    balanceAtBuy: parseInt(balance),
-    balanceAtSell: parseInt(stockData.portfolio.cash),
+    balanceAtBuy: !isNaN(parseInt(balance)) ? parseInt(balance) : 0,
+    balanceAtSell: !isNaN(parseInt(stockData.portfolio.cash))
+      ? parseInt(stockData.portfolio.cash)
+      : 0,
     signals: stockData.stocks[stockIndex].signals,
     session: stockData.session._id,
     roi: roi,
