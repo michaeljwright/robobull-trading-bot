@@ -7,7 +7,8 @@ const { syncPortfolioPostions } = require("../../services/portfolio");
 
 const {
   addOrderToQueue,
-  checkOrderedTooRecently
+  checkOrderedTooRecently,
+  getOrderRoi
 } = require("../../services/orders");
 
 const tradingStocks = require("../../services/stocks");
@@ -27,6 +28,92 @@ const initializeAlpaca = () => {
     paper: true,
     usePolygon: false
   });
+};
+
+/**
+ * Updates today's orders (and average prices) based on Alpaca Orders API
+ *
+ * @param {(Alpaca|TradingProvider)} tradingProvider
+ * @param {Object} stockData
+ *
+ * @returns {Object} stockData
+ */
+const updateOrders = async (tradingProvider, stockData) => {
+  // set order settings for API call
+  let orderSettings = {
+    status: "closed",
+    after: moment()
+      .subtract(1, "days")
+      .endOf("day")
+      .toISOString(),
+    until: moment().toISOString(),
+    direction: "desc"
+  };
+
+  // get orders
+  await tradingProvider
+    .getOrders(orderSettings)
+    .then(async orders => {
+      _.forOwn(orders, async order => {
+        // order details (if order filled)
+        if (order.filled_avg_price) {
+          let filledOrder = {
+            symbol: order.symbol,
+            processed: true,
+            updatedAt: order.updated_at
+              ? moment.tz(order.updated_at, process.env.TIMEZONE).valueOf()
+              : moment()
+                  .tz(process.env.TIMEZONE)
+                  .valueOf(),
+            qty: order.filled_qty,
+            price: order.filled_avg_price,
+            amount: order.filled_qty * order.filled_avg_price,
+            roi: getOrderRoi(
+              stockData,
+              order.symbol,
+              order.side,
+              order.filled_qty,
+              order.filled_avg_price
+            )
+          };
+
+          // update mongodb
+          await database.mongodbUpdateOrder(
+            {
+              clientOrderId: order.client_order_id
+            },
+            filledOrder
+          );
+
+          // update data in memory
+          let orderIndex = _.findIndex(stockData.orders, {
+            symbol: filledOrder.symbol
+          });
+          if (orderIndex > 0) {
+            stockData.orders[orderIndex].processed = filledOrder.processed;
+            stockData.orders[orderIndex].qty = filledOrder.qty;
+            stockData.orders[orderIndex].price = filledOrder.price;
+            stockData.orders[orderIndex].amount = filledOrder.amount;
+            stockData.orders[orderIndex].roi = filledOrder.roi;
+          }
+        }
+      });
+
+      // update view
+      outputs.writeOutput(
+        stockData.orders,
+        "receive_orders",
+        stockData.io,
+        false
+      );
+      outputs.writeOutput(null, "receive_clock", stockData.io, false);
+    })
+    .catch(err => {
+      errors.log("ERROR: ALPACA GET ORDERS", "info", true);
+      errors.log(err, "error");
+    });
+
+  return stockData;
 };
 
 /**
@@ -67,10 +154,7 @@ const syncOrders = async (session, io) => {
           }
         });
 
-        // write orders to socket in frontend trading terminal
-        _.forOwn(orders, order =>
-          outputs.writeOutput(order, "receive_orders", io, false)
-        );
+        outputs.writeOutput(orders, "receive_orders", io, false);
       } catch (err) {
         errors.log(err, "error");
       }
@@ -172,19 +256,40 @@ const checkOrdersToBeProcessed = async (tradingProvider, stockData) => {
               type: "market",
               time_in_force: "day"
             })
-            .then(res => {
-              // update mongodb and stockData to be returned for processed order
+            .then(async res => {
+              // update orders if order successful
               if (res.status == "accepted" && order.processed === false) {
+                // update order properties
                 order.processed = true;
+                order.dateTime = moment
+                  .tz(res.created_at, process.env.TIMEZONE)
+                  .valueOf();
+                order.clientOrderId = res.client_order_id;
+
+                // update mongodb
                 try {
                   let orderUpdated = database.mongodbUpdateOrder(
                     { _id: order._id },
                     order
                   );
                   if (!_.isEmpty(orderUpdated)) {
+                    // update data in memory
                     stockData.orders[orderIndex].processed = order.processed;
+                    stockData.orders[orderIndex].dateTime = order.dateTime;
+                    stockData.orders[orderIndex].clientOrderId =
+                      order.clientOrderId;
+
+                    // output to console
+                    console.log(
+                      `ORDER: ${order.side} / ${moment(order.dateTime).format(
+                        "DD/MM/YYYY h:mm:ss a"
+                      )} >>>>>>> ${order.symbol} (Price: ${
+                        order.price
+                      } / Amount: ${order.qty * order.price})`
+                    );
                   }
                 } catch (err) {
+                  console.log("ERROR: MONGO ORDER UPDATE");
                   errors.log(err, "error");
                 }
               } else {
@@ -238,6 +343,9 @@ const updateSubcribedStocks = async (tradingProvider, stockData, client) => {
   await tradingProvider
     .getPositions()
     .then(async positions => {
+      // positions
+      // [{ "avg_entry_price": "is the price paid", "current_price": "is the price now"}]
+
       // get latest stocks from screener
       let stocks = await tradingStocks.getStocks(stockData.settings);
 
@@ -375,6 +483,60 @@ const checkPositionsRoi = (tradingProvider, stockData, positions) => {
 };
 
 /**
+ * Updates (and display in console) ROI
+ *
+ * @param {Object} stockData
+ * @param {number} roi
+ * @param {number} balance
+ * @param {boolean} display
+ *
+ * @returns {Object} stockData
+ */
+const updateAndDisplayAccountRoi = (
+  stockData,
+  roi,
+  balance,
+  display = true
+) => {
+  let changeRoi = 0;
+
+  if (
+    !isNaN(parseFloat(stockData.lastRoi)) &&
+    stockData.lastRoi !== 0 &&
+    !isNaN(parseFloat(roi)) &&
+    roi !== 0
+  ) {
+    changeRoi = (roi - stockData.lastRoi) / roi;
+  }
+
+  if (display && !isNaN(parseFloat(roi))) {
+    console.log(
+      `>>> CURRENT ROI: ${roi.toFixed(2)}% (CHANGE: ${changeRoi.toFixed(2)}%)`
+    );
+  }
+
+  stockData.lastRoi = roi;
+  stockData.portfolio.cash = !isNaN(parseFloat(balance))
+    ? parseFloat(balance)
+    : 0;
+
+  // write socket to frontend trading terminal
+  outputs.writeOutput(
+    {
+      startValue: stockData.portfolio.startingCapital,
+      endValue: stockData.portfolio.cash,
+      roi: roi
+    },
+    "receive_result",
+    stockData.io,
+    false
+  );
+  outputs.writeOutput({ dateTime: null }, "receive_clock", stockData.io, false);
+
+  return stockData;
+};
+
+/**
  * Checks account ROI for automatically closing positions or if market about to close
  *
  * @param {(Alpaca|TradingProvider)} tradingProvider
@@ -397,49 +559,7 @@ const checkAccountRoi = async (tradingProvider, stockData, client) => {
       roi =
         ((account.equity - account.last_equity) / account.last_equity) * 100;
 
-      // TODO: Should move to own method
-      if (
-        !isNaN(parseFloat(stockData.lastRoi)) &&
-        stockData.lastRoi !== 0 &&
-        !isNaN(parseFloat(roi)) &&
-        roi !== 0
-      ) {
-        let changeRoi = (roi - stockData.lastRoi) / roi;
-        if (changeRoi !== 0) {
-          console.log(
-            ">>> PREVIOUS ROI: " +
-              stockData.lastRoi.toFixed(2) +
-              " (CHANGE: " +
-              changeRoi.toFixed(2) +
-              "%)"
-          );
-        }
-      }
-
-      if (!isNaN(parseFloat(roi))) {
-        console.log(">>> CURRENT ROI: " + roi.toFixed(2) + "%");
-      }
-
-      stockData.lastRoi = roi;
-      stockData.portfolio.cash = account.cash;
-
-      // write socket to frontend trading terminal
-      outputs.writeOutput(
-        {
-          startValue: stockData.portfolio.startingCapital,
-          endValue: stockData.portfolio.cash,
-          roi: roi
-        },
-        "receive_result",
-        stockData.io,
-        false
-      );
-      outputs.writeOutput(
-        { dateTime: null },
-        "receive_clock",
-        stockData.io,
-        false
-      );
+      stockData = updateAndDisplayAccountRoi(stockData, roi, account.cash);
     })
     .catch(err => {
       console.log("ERROR: ALPACA ACCOUNT");
@@ -578,10 +698,12 @@ const checkMarketOpen = async (tradingProvider, stockData) => {
 
 module.exports = {
   initializeAlpaca,
+  updateOrders,
   syncOrders,
   checkOrdersToBeProcessed,
   updateSubcribedStocks,
   checkPositionsRoi,
+  updateAndDisplayAccountRoi,
   checkAccountRoi,
   checkMarketOpen
 };

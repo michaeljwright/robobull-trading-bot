@@ -115,6 +115,15 @@ const alpacaLive = async (settings, session, io) => {
 
                       setInterval(
                         async () =>
+                          (stockData = await baseProvider.updateOrders(
+                            trading,
+                            stockData
+                          )),
+                        30000 // update orders every 30 secs
+                      );
+
+                      setInterval(
+                        async () =>
                           (stockData = await baseProvider.updateSubcribedStocks(
                             trading,
                             stockData,
