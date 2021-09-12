@@ -285,7 +285,9 @@ const checkOrdersToBeProcessed = async (tradingProvider, stockData) => {
                         "DD/MM/YYYY h:mm:ss a"
                       )} >>>>>>> ${order.symbol} (Price: ${
                         order.price
-                      } / Amount: ${order.qty * order.price})`
+                      } / Amount: ${order.qty * order.price} / ROI: ${
+                        order.roi
+                      })`
                     );
                   }
                 } catch (err) {
