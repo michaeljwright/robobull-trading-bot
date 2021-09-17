@@ -44,7 +44,7 @@ const alpacaLive = async (settings, session, io) => {
       if (res.is_open) {
         trading.getAccount().then(account => {
           if (account.pattern_day_trader) {
-            console.log("FLAGGED AS PDT");
+            console.log("FLAGGED AS PDT" + account.pattern_day_trader);
           }
 
           settings.startingCapital = account.cash
@@ -113,14 +113,14 @@ const alpacaLive = async (settings, session, io) => {
                         30000 // check ROI and current positions every 30 secs
                       );
 
-                      setInterval(
-                        async () =>
-                          (stockData = await baseProvider.updateOrders(
-                            trading,
-                            stockData
-                          )),
-                        30000 // update orders every 30 secs
-                      );
+                      // setInterval(
+                      //   async () =>
+                      //     (stockData = await baseProvider.updateOrders(
+                      //       trading,
+                      //       stockData
+                      //     )),
+                      //   30000 // update orders every 30 secs
+                      // );
 
                       setInterval(
                         async () =>
