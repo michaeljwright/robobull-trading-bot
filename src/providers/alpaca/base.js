@@ -57,6 +57,14 @@ const updateOrders = async (tradingProvider, stockData) => {
       _.forOwn(orders, async order => {
         // order details (if order filled)
         if (order.filled_avg_price) {
+          let roi = getOrderRoi(
+            stockData,
+            order.symbol,
+            order.side,
+            order.filled_qty,
+            order.filled_avg_price
+          );
+
           let filledOrder = {
             symbol: order.symbol,
             processed: true,
@@ -67,35 +75,33 @@ const updateOrders = async (tradingProvider, stockData) => {
                   .valueOf(),
             qty: order.filled_qty,
             price: order.filled_avg_price,
-            amount: order.filled_qty * order.filled_avg_price,
-            roi: getOrderRoi(
-              stockData,
-              order.symbol,
-              order.side,
-              order.filled_qty,
-              order.filled_avg_price
-            )
+            amount: order.filled_qty * order.filled_avg_price
           };
 
-          // update mongodb
-          await database.mongodbUpdateOrder(
-            {
-              clientOrderId: order.client_order_id
-            },
-            filledOrder
-          );
-
-          // update data in memory
-          let orderIndex = _.findIndex(stockData.orders, {
-            symbol: filledOrder.symbol
-          });
-          if (orderIndex > 0) {
-            stockData.orders[orderIndex].processed = filledOrder.processed;
-            stockData.orders[orderIndex].qty = filledOrder.qty;
-            stockData.orders[orderIndex].price = filledOrder.price;
-            stockData.orders[orderIndex].amount = filledOrder.amount;
-            stockData.orders[orderIndex].roi = filledOrder.roi;
+          if (roi !== 0) {
+            filledOrder.roi = roi;
           }
+
+          // update mongodb > TODO: trying to remember why we should update orders in db?
+          // await database.mongodbUpdateOrder(
+          //   {
+          //     clientOrderId: order.client_order_id
+          //   },
+          //   filledOrder
+          // );
+
+          // update data in memory > TODO: same for orders in memory
+          // let orderIndex = _.findIndex(stockData.orders, {
+          //   symbol: filledOrder.symbol,
+          //   side: order.side
+          // });
+          // if (orderIndex > 0) {
+          //   stockData.orders[orderIndex].processed = filledOrder.processed;
+          //   stockData.orders[orderIndex].qty = filledOrder.qty;
+          //   stockData.orders[orderIndex].price = filledOrder.price;
+          //   stockData.orders[orderIndex].amount = filledOrder.amount;
+          //   stockData.orders[orderIndex].roi = filledOrder.roi;
+          // }
         }
       });
 
@@ -503,24 +509,22 @@ const updateAndDisplayAccountRoi = (
   let changeRoi = 0;
 
   if (
-    !isNaN(parseFloat(stockData.lastRoi)) &&
+    !isNaN(stockData.lastRoi) &&
     stockData.lastRoi !== 0 &&
-    !isNaN(parseFloat(roi)) &&
+    !isNaN(roi) &&
     roi !== 0
   ) {
     changeRoi = (roi - stockData.lastRoi) / roi;
   }
 
-  if (display && !isNaN(parseFloat(roi))) {
+  if (display && !isNaN(roi)) {
     console.log(
       `>>> CURRENT ROI: ${roi.toFixed(2)}% (CHANGE: ${changeRoi.toFixed(2)}%)`
     );
   }
 
   stockData.lastRoi = roi;
-  stockData.portfolio.cash = !isNaN(parseFloat(balance))
-    ? parseFloat(balance)
-    : 0;
+  stockData.portfolio.cash = !isNaN(balance) ? balance : 0;
 
   // write socket to frontend trading terminal
   outputs.writeOutput(
