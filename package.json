@@ -23,7 +23,7 @@
     "sinon": "^10.0.0"
   },
   "dependencies": {
-    "@alpacahq/alpaca-trade-api": "^2.1.0",
+    "@alpacahq/alpaca-trade-api": "2.0.0",
     "@michaeljwright/alpaca-js-backtesting": "^2.0.3",
     "async": "^3.2.0",
     "axios": "^0.21.1",
