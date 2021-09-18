@@ -306,22 +306,14 @@ const getOrderRoi = (stockData, symbol, side, qty, price) => {
     });
 
     if (
-      _.isEmpty(stockData.orders) &&
+      !_.isEmpty(stockData.orders) &&
       orderIndex &&
       typeof stockData.orders[orderIndex] !== "undefined"
     ) {
-      console.log(
-        `------- IMPORTANT getOrderRoi Previous BUY order: ${JSON.stringify(
-          stockData.orders[orderIndex]
-        )}`
-      );
-
       if (stockData.orders[orderIndex].hasOwnProperty("amount")) {
         roi =
           (amount - stockData.orders[orderIndex].amount) /
           stockData.orders[orderIndex].amount;
-
-        console.log(`ROI: ${roi}`);
       }
     }
   }
