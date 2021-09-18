@@ -83,25 +83,25 @@ const updateOrders = async (tradingProvider, stockData) => {
           }
 
           // update mongodb > TODO: trying to remember why we should update orders in db?
-          // await database.mongodbUpdateOrder(
-          //   {
-          //     clientOrderId: order.client_order_id
-          //   },
-          //   filledOrder
-          // );
+          await database.mongodbUpdateOrder(
+            {
+              clientOrderId: order.client_order_id
+            },
+            filledOrder
+          );
 
-          // update data in memory > TODO: same for orders in memory
-          // let orderIndex = _.findIndex(stockData.orders, {
-          //   symbol: filledOrder.symbol,
-          //   side: order.side
-          // });
-          // if (orderIndex > 0) {
-          //   stockData.orders[orderIndex].processed = filledOrder.processed;
-          //   stockData.orders[orderIndex].qty = filledOrder.qty;
-          //   stockData.orders[orderIndex].price = filledOrder.price;
-          //   stockData.orders[orderIndex].amount = filledOrder.amount;
-          //   stockData.orders[orderIndex].roi = filledOrder.roi;
-          // }
+          // update data in memory
+          let orderIndex = _.findIndex(stockData.orders, {
+            symbol: filledOrder.symbol,
+            side: order.side
+          });
+          if (orderIndex > 0) {
+            stockData.orders[orderIndex].processed = filledOrder.processed;
+            stockData.orders[orderIndex].qty = filledOrder.qty;
+            stockData.orders[orderIndex].price = filledOrder.price;
+            stockData.orders[orderIndex].amount = filledOrder.amount;
+            stockData.orders[orderIndex].roi = filledOrder.roi;
+          }
         }
       });
 
