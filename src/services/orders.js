@@ -358,9 +358,9 @@ const addToOrderLogs = (
     qty: qty,
     price: price,
     amount: amount,
-    balanceAtBuy: !isNaN(balance) ? balance : 0,
-    balanceAtSell: !isNaN(stockData.portfolio.cash)
-      ? stockData.portfolio.cash
+    balanceAtBuy: !isNaN(parseFloat(balance)) ? parseFloat(balance) : 0,
+    balanceAtSell: !isNaN(parseFloat(stockData.portfolio.cash))
+      ? parseFloat(stockData.portfolio.cash)
       : 0,
     signals: stockData.stocks[stockIndex].signals,
     session: stockData.session._id,
