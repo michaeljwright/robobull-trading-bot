@@ -10,7 +10,7 @@
     "console": "node --max-old-space-size=4096 console-only.js"
   },
   "author": "Mike Wright",
-  "license": "ISC",
+  "license": "Apache",
   "engines": {
     "node": "12.x"
   },
