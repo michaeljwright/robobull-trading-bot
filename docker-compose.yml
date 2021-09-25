@@ -17,7 +17,7 @@ services:
     build:
       context: .
       dockerfile: docker/node/Dockerfile
-    command: npm run dev
+    command: npm run start
     volumes:
       - ./:/app/
     ports:
