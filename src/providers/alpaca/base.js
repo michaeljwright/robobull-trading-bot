@@ -189,7 +189,7 @@ const checkOrdersToBeProcessed = async (tradingProvider, stockData) => {
 
   // check if trading halted and exit() process
   try {
-    let session = await database.mongodbGetSessions({
+    let session = database.mongodbGetSessions({
       _id: stockData.session._id,
       haltTrading: true,
       created: {
@@ -263,12 +263,12 @@ const checkOrdersToBeProcessed = async (tradingProvider, stockData) => {
               symbol: order.symbol,
               qty: order.qty,
               side: order.side,
-              type: "market",
+              type: "market", // TODO: change to limit order rather than market order
               time_in_force: "day"
             })
             .then(async res => {
               // update orders if order successful
-              if (res.status == "accepted" && order.processed === false) {
+              if (res.status == "accepted") {
                 // update order properties
                 order.processed = true;
                 order.dateTime = moment
@@ -305,23 +305,33 @@ const checkOrdersToBeProcessed = async (tradingProvider, stockData) => {
                   errors.log(err, "error");
                 }
               } else {
+                processOrder = false;
                 errors.log(
-                  "ERROR: ALPACA ORDER NOT PROCESSED " + order.symbol,
+                  "ERROR: ALPACA ORDER NOT PROCESSED (API RESPONSE) FOR " +
+                    order.symbol,
                   "info",
                   true
                 );
               }
             })
             .catch(err => {
-              errors.log(err, "error");
+              processOrder = false;
+              errors.log(
+                "ERROR: ALPACA ORDER NOT PROCESSED (API CALL) FOR " +
+                  order.symbol,
+                "info",
+                true
+              );
             });
-        } else {
+        }
+
+        if (!order.processed) {
           // If we aren't processing the order based on stock percentage range then we need to cancel it
           // TODO: Delete order from view via socket
           order.processed = true;
           order.cancelled = true;
           try {
-            let orderUpdated = database.mongodbUpdateOrder(
+            let orderUpdated = await database.mongodbUpdateOrder(
               { _id: order._id },
               order
             );
@@ -330,6 +340,11 @@ const checkOrdersToBeProcessed = async (tradingProvider, stockData) => {
               stockData.orders[orderIndex].cancelled = order.cancelled;
             }
           } catch (err) {
+            errors.log(
+              "ERROR: MONGODB ORDER UPDATE FOR " + order.symbol,
+              "info",
+              true
+            );
             errors.log(err, "error");
           }
         }
