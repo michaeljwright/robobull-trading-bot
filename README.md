@@ -105,6 +105,7 @@ Change the following in settings.json, then re-run `docker-compose up` and go to
 - **thresholdStockCap** 15 - how many positions can be held at once
 - **orderStopLoss** -0.006 - how much a position can lose in return on investment before selling
 - **orderTakeProfit** 0.008 - how much a positions can gain in return on investment before selling
+- **orderHoldUntilProfit** false - whether to stop selling a position at a loss (holding until profit)
 - **roiToClosePositions** 0.3 - how much the overall ROI must be over to close all current positions and end trading
 - **roiToResetPositions** -0.5 - how much the overall ROI must be below to gradually close poor performing positions (currently disabled / needs refactoring)
 - **startDate** "2021-02-01 00:00:00" - start date used for back testing

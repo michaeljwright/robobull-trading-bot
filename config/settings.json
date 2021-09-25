@@ -12,6 +12,7 @@
   "thresholdStockCap": 15,
   "orderStopLoss": -0.006,
   "orderTakeProfit": 0.008,
+  "orderHoldUntilProfit": false,
   "roiToClosePositions": 0.5,
   "roiToResetPositions": -0.5,
   "startDate": "2021-02-01 00:00:00",

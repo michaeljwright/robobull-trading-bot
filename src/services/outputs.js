@@ -23,9 +23,10 @@ const writeOutput = (
     console.log(output);
   }
   if (ioChannel && io) {
-    io.on("connection", socket => {
-      socket.emit(ioChannel, output);
-    });
+    io.emit(ioChannel, output);
+    // io.on("connection", socket => {
+    //   socket.emit(ioChannel, output);
+    // });
   }
 };
 

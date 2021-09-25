@@ -17,6 +17,7 @@ const SettingSchema = mongoose.Schema({
   thresholdStockCap: Number,
   orderStopLoss: Number,
   orderTakeProfit: Number,
+  orderHoldUntilProfit: { type: Boolean, default: false },
   roiToClosePositions: Number,
   roiToResetPositions: Number,
   thresholdToBuy: Number,

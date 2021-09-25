@@ -113,6 +113,7 @@ const alpacaLive = async (settings, session, io) => {
                         30000 // check ROI and current positions every 30 secs
                       );
 
+                      // TODO: worth commenting out this interval to gauge errors / performance
                       setInterval(
                         async () =>
                           (stockData = await baseProvider.updateOrders(

@@ -207,33 +207,52 @@ const addOrderToQueue = (
     );
   }
 
-  // add order to order logs
-  stockData = addToOrderLogs(
-    stockData,
-    stockIndex,
-    side,
-    qty,
-    price,
-    balance,
-    dateTime
-  );
+  // if orderHoldUntilProfit enabled and position at a loss
+  if (
+    getOrderRoi(
+      stockData,
+      stockData.stocks[stockIndex].symbol,
+      side,
+      qty,
+      price
+    ) < 0 &&
+    side == "sell" &&
+    stockData.settings.orderHoldUntilProfit
+  ) {
+    console.log(
+      `ORDER: Sell order for ${stockData.stocks[stockIndex].symbol} cancelled as at a loss and orderHoldUntilProfit enabled`
+    );
+  } else {
+    // complete order
 
-  // update portfolio balance
-  stockData = updateBalance(stockData, side, qty, price);
+    // add order to order logs
+    stockData = addToOrderLogs(
+      stockData,
+      stockIndex,
+      side,
+      qty,
+      price,
+      balance,
+      dateTime
+    );
 
-  // update portfolio
-  stockData = updatePositions(
-    tradingProvider,
-    stockData,
-    stockIndex,
-    side,
-    qty,
-    price,
-    balance
-  );
+    // update portfolio balance
+    stockData = updateBalance(stockData, side, qty, price);
 
-  // reset signals for all stocks
-  stockData = resetPositionsSignals(stockData);
+    // update portfolio
+    stockData = updatePositions(
+      tradingProvider,
+      stockData,
+      stockIndex,
+      side,
+      qty,
+      price,
+      balance
+    );
+
+    // reset signals for all stocks
+    stockData = resetPositionsSignals(stockData);
+  }
 
   return stockData;
 };

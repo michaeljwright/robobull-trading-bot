@@ -57,6 +57,12 @@ const updateOrders = async (tradingProvider, stockData) => {
       _.forOwn(orders, async order => {
         // order details (if order filled)
         if (order.filled_avg_price) {
+          // find order in memory
+          let orderIndex = _.findLastIndex(stockData.orders, {
+            symbol: filledOrder.symbol,
+            side: order.side
+          });
+
           let roi = getOrderRoi(
             stockData,
             order.symbol,
@@ -75,12 +81,14 @@ const updateOrders = async (tradingProvider, stockData) => {
                   .valueOf(),
             qty: order.filled_qty,
             price: order.filled_avg_price,
-            amount: order.filled_qty * order.filled_avg_price
+            amount: order.filled_qty * order.filled_avg_price,
+            roi:
+              !isNaN(parseFloat(roi)) && roi !== 0
+                ? roi
+                : stockData.orders[orderIndex].roi
+                ? stockData.orders[orderIndex].roi
+                : 0
           };
-
-          if (roi !== 0) {
-            filledOrder.roi = roi;
-          }
 
           // update mongodb > TODO: trying to remember why we should update orders in db?
           await database.mongodbUpdateOrder(
@@ -91,10 +99,6 @@ const updateOrders = async (tradingProvider, stockData) => {
           );
 
           // update data in memory
-          let orderIndex = _.findIndex(stockData.orders, {
-            symbol: filledOrder.symbol,
-            side: order.side
-          });
           if (orderIndex > 0) {
             stockData.orders[orderIndex].processed = filledOrder.processed;
             stockData.orders[orderIndex].qty = filledOrder.qty;
@@ -465,7 +469,7 @@ const checkPositionsRoi = (tradingProvider, stockData, positions) => {
 
     // Update portfolio positions / balance / add to order queue (if threshold hit)
     if (positionThresholdPlaceOrder) {
-      let stockIndex = _.findIndex(stockData.stocks, {
+      let stockIndex = _.findLastIndex(stockData.stocks, {
         symbol: position.symbol
       });
       stockData = addOrderToQueue(
@@ -595,26 +599,34 @@ const checkAccountRoi = async (tradingProvider, stockData, client) => {
           positions.length > 0 &&
           stockData.settings.useClosePositionsBeforeMarketClose
         ) {
-          // sell based on ROI of all positions (sorted by lowest first)
-          positions = _.orderBy(positions, ["unrealized_plpc"], ["asc"]);
+          // sell based on ROI of all positions (sorted by highest first)
+          positions = _.orderBy(positions, ["unrealized_plpc"], ["desc"]);
           let position = _.first(positions); // get first position to close / sell
 
-          // Update portfolio positions / balance / add to order queue
-          let stockIndex = _.findIndex(stockData.stocks, {
+          // find this specific position in memory
+          let stockIndex = _.findLastIndex(stockData.stocks, {
             symbol: position.symbol
           });
-          stockData = addOrderToQueue(
-            tradingProvider,
-            stockData,
-            stockIndex,
-            "sell",
-            position.qty,
-            position.current_price,
-            stockData.portfolio.cash,
-            moment()
-              .tz(process.env.TIMEZONE)
-              .valueOf()
-          );
+
+          // check in case orderHoldUntilProfit enabled and position has negative ROI
+          if (
+            !stockData.settings.orderHoldUntilProfit &&
+            parseFloat(position["unrealized_plpc"]) > 0
+          ) {
+            // Update portfolio positions / balance / add to order queue
+            stockData = addOrderToQueue(
+              tradingProvider,
+              stockData,
+              stockIndex,
+              "sell",
+              position.qty,
+              position.current_price,
+              stockData.portfolio.cash,
+              moment()
+                .tz(process.env.TIMEZONE)
+                .valueOf()
+            );
+          }
         } else {
           if (
             roi > stockData.settings.roiToClosePositions ||
