@@ -189,7 +189,7 @@ const checkOrdersToBeProcessed = async (tradingProvider, stockData) => {
 
   // check if trading halted and exit() process
   try {
-    let session = database.mongodbGetSessions({
+    let session = await database.mongodbGetSessions({
       _id: stockData.session._id,
       haltTrading: true,
       created: {
@@ -278,7 +278,7 @@ const checkOrdersToBeProcessed = async (tradingProvider, stockData) => {
 
                 // update mongodb
                 try {
-                  let orderUpdated = database.mongodbUpdateOrder(
+                  let orderUpdated = await database.mongodbUpdateOrder(
                     { _id: order._id },
                     order
                   );

@@ -159,18 +159,18 @@ const alpacaLive = async (settings, session, io) => {
                     }
                   });
 
-                  client.onDisconnect(() => {
+                  client.onDisconnect(async () => {
                     console.log("Disconnected");
-                    database.mongodbClose();
+                    await database.mongodbClose();
                   });
 
                   client.connect();
                 });
             })
-            .catch(err => {
+            .catch(async err => {
               console.log("ERROR: ALPACA POSITIONS");
               console.log(err);
-              database.mongodbClose();
+              await database.mongodbClose();
             });
         });
       } else {
@@ -180,10 +180,10 @@ const alpacaLive = async (settings, session, io) => {
           io,
           true
         );
-        database.mongodbClose();
+        await database.mongodbClose();
       }
     })
-    .catch(err => {
+    .catch(async err => {
       outputs.writeOutput(
         "ERROR: ALPACA CLOCK",
         "receive_market_closed",
@@ -191,7 +191,7 @@ const alpacaLive = async (settings, session, io) => {
         true
       );
       console.log(err.error);
-      database.mongodbClose();
+      await database.mongodbClose();
     });
 };
 
