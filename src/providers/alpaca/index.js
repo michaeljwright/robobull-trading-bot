@@ -44,7 +44,10 @@ const alpacaLive = async (settings, session, io) => {
       if (res.is_open) {
         trading.getAccount().then(account => {
           if (account.pattern_day_trader) {
-            console.log("FLAGGED AS PDT" + account.pattern_day_trader);
+            console.log(
+              "Is this trading account flagged as PDT? " +
+                account.pattern_day_trader
+            );
           }
 
           settings.startingCapital = account.cash

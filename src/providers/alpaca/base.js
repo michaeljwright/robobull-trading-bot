@@ -59,7 +59,7 @@ const updateOrders = async (tradingProvider, stockData) => {
         if (order.filled_avg_price) {
           // find order in memory
           let orderIndex = _.findLastIndex(stockData.orders, {
-            symbol: filledOrder.symbol,
+            symbol: order.symbol,
             side: order.side
           });
 
@@ -609,6 +609,7 @@ const checkAccountRoi = async (tradingProvider, stockData, client) => {
       ) {
         // set halt trading to true (no more buys allowed)
         stockData.haltTrading = true;
+        let closePositions = true;
 
         if (
           positions.length > 0 &&
@@ -625,9 +626,13 @@ const checkAccountRoi = async (tradingProvider, stockData, client) => {
 
           // check in case orderHoldUntilProfit enabled and position has negative ROI
           if (
-            !stockData.settings.orderHoldUntilProfit &&
-            parseFloat(position["unrealized_plpc"]) > 0
+            stockData.settings.orderHoldUntilProfit &&
+            parseFloat(position["unrealized_plpc"]) < 0
           ) {
+            closePositions = false;
+          }
+
+          if (closePositions) {
             // Update portfolio positions / balance / add to order queue
             stockData = addOrderToQueue(
               tradingProvider,

@@ -215,7 +215,7 @@ const addOrderToQueue = (
       side,
       qty,
       price
-    ) < 0 &&
+    ) <= 0 &&
     side == "sell" &&
     stockData.settings.orderHoldUntilProfit
   ) {
