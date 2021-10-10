@@ -63,48 +63,48 @@ const updateOrders = async (tradingProvider, stockData) => {
             side: order.side
           });
 
-          let roi = getOrderRoi(
-            stockData,
-            order.symbol,
-            order.side,
-            order.filled_qty,
-            order.filled_avg_price
-          );
+          if (orderIndex > 0) {
+            let roi = getOrderRoi(
+              stockData,
+              order.symbol,
+              order.side,
+              order.filled_qty,
+              order.filled_avg_price
+            );
 
-          let filledOrder = {
-            symbol: order.symbol,
-            processed: true,
-            updatedAt: order.updated_at
-              ? moment.tz(order.updated_at, process.env.TIMEZONE).valueOf()
-              : moment()
-                  .tz(process.env.TIMEZONE)
-                  .valueOf(),
-            qty: order.filled_qty,
-            price: order.filled_avg_price,
-            amount: order.filled_qty * order.filled_avg_price,
-            roi:
-              !isNaN(parseFloat(roi)) && roi !== 0
+            let filledOrder = {
+              symbol: order.symbol,
+              processed: true,
+              updatedAt: order.updated_at
+                ? moment.tz(order.updated_at, process.env.TIMEZONE).valueOf()
+                : moment()
+                    .tz(process.env.TIMEZONE)
+                    .valueOf(),
+              qty: order.filled_qty,
+              price: order.filled_avg_price,
+              amount: order.filled_qty * order.filled_avg_price,
+              roi: !isNaN(parseFloat(roi))
                 ? roi
                 : stockData.orders[orderIndex].roi
-                ? stockData.orders[orderIndex].roi
-                : 0
-          };
+            };
 
-          // update mongodb > TODO: trying to remember why we should update orders in db?
-          await database.mongodbUpdateOrder(
-            {
-              clientOrderId: order.client_order_id
-            },
-            filledOrder
-          );
+            // update mongodb
+            await database.mongodbUpdateOrder(
+              {
+                clientOrderId: order.client_order_id
+              },
+              filledOrder
+            );
 
-          // update data in memory
-          if (orderIndex > 0) {
+            // update data in memory
             stockData.orders[orderIndex].processed = filledOrder.processed;
             stockData.orders[orderIndex].qty = filledOrder.qty;
             stockData.orders[orderIndex].price = filledOrder.price;
             stockData.orders[orderIndex].amount = filledOrder.amount;
-            stockData.orders[orderIndex].roi = filledOrder.roi;
+            stockData.orders[orderIndex].roi =
+              filledOrder.roi !== 0
+                ? filledOrder.roi
+                : stockData.orders[orderIndex].roi;
           }
         }
       });
@@ -164,6 +164,9 @@ const syncOrders = async (session, io) => {
           }
         });
 
+        // TODO: update memory with today's previous processed orders
+
+        // update view with today's previously processed orders
         outputs.writeOutput(orders, "receive_orders", io, false);
       } catch (err) {
         errors.log(err, "error");
