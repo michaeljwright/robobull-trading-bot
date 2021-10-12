@@ -35,9 +35,9 @@ _Tip:_ If the US markets are closed then you can use back testing instead.
 
 - Run `docker-compose up`
 
-- Create a new user by going here: (http://localhost:3001/create-user). You'll then be redirected to the trading terminal. You only need to create a new user once.
+- Create a new user by going here: (http://localhost:3000/create-user). You'll then be redirected to the trading terminal. You only need to create a new user once.
 
-- Once you've created a new user, you can re-run the trading bot in the future by visiting (http://localhost:3001/run).
+- Once you've created a new user, you can re-run the trading bot in the future by visiting (http://localhost:3000/run). However, you may need to stop the docker container and start it again to rerun the trading bot (this is due to only 1 connection allowed per trading account on Alpaca).
 
 - You can also visit (http://localhost:8081) to view and manage MongoDb data
 
@@ -81,7 +81,7 @@ Then open another terminal tab:
 
 ### Back Testing
 
-Change the following in settings.json, then re-run `docker-compose up` and go to http://localhost:3001/run
+Change the following in settings.json, then re-run `docker-compose up` and go to http://localhost:3000/run
 
 - **provider** make sure this is set to `alpaca`
 - **isPaper** make sure this is set to `true`
