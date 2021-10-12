@@ -24,6 +24,9 @@ const writeOutput = (
   }
   if (ioChannel && io) {
     io.emit(ioChannel, output);
+    // io.on("connection", socket => {
+    //   socket.emit(ioChannel, output);
+    // });
   }
 };
 

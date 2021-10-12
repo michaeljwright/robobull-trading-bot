@@ -36,7 +36,7 @@ const getPositions = (stockData, symbol) => {
  * @returns {Object} position
  */
 const getPosition = (stockData, symbol) => {
-  let positionIndex = _.findIndex(stockData.portfolio.positions, {
+  let positionIndex = _.findLastIndex(stockData.portfolio.positions, {
     symbol: symbol
   });
 

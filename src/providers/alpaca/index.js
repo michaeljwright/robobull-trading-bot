@@ -44,7 +44,10 @@ const alpacaLive = async (settings, session, io) => {
       if (res.is_open) {
         trading.getAccount().then(account => {
           if (account.pattern_day_trader) {
-            console.log("FLAGGED AS PDT");
+            console.log(
+              "Is this trading account flagged as PDT? " +
+                account.pattern_day_trader
+            );
           }
 
           settings.startingCapital = account.cash
@@ -115,6 +118,15 @@ const alpacaLive = async (settings, session, io) => {
 
                       setInterval(
                         async () =>
+                          (stockData = await baseProvider.updateOrders(
+                            trading,
+                            stockData
+                          )),
+                        60000 // update orders every 60 secs
+                      );
+
+                      setInterval(
+                        async () =>
                           (stockData = await baseProvider.updateSubcribedStocks(
                             trading,
                             stockData,
@@ -149,18 +161,18 @@ const alpacaLive = async (settings, session, io) => {
                     }
                   });
 
-                  client.onDisconnect(() => {
+                  client.onDisconnect(async () => {
                     console.log("Disconnected");
-                    database.mongodbClose();
+                    await database.mongodbClose();
                   });
 
                   client.connect();
                 });
             })
-            .catch(err => {
+            .catch(async err => {
               console.log("ERROR: ALPACA POSITIONS");
               console.log(err);
-              database.mongodbClose();
+              await database.mongodbClose();
             });
         });
       } else {
@@ -170,10 +182,10 @@ const alpacaLive = async (settings, session, io) => {
           io,
           true
         );
-        database.mongodbClose();
+        await database.mongodbClose();
       }
     })
-    .catch(err => {
+    .catch(async err => {
       outputs.writeOutput(
         "ERROR: ALPACA CLOCK",
         "receive_market_closed",
@@ -181,7 +193,7 @@ const alpacaLive = async (settings, session, io) => {
         true
       );
       console.log(err.error);
-      database.mongodbClose();
+      await database.mongodbClose();
     });
 };
 
