@@ -197,44 +197,62 @@ const addOrderToQueue = (
       type: "market",
       time_in_force: "day"
     });
+
+    console.log(
+      `ORDER: ${side} / ${moment(dateTime).format(
+        "DD/MM/YYYY h:mm:ss a"
+      )} >>>>>>> ${
+        stockData.stocks[stockIndex].symbol
+      } (Price: ${price} / Amount: ${qty * price})`
+    );
   }
 
-  // add order to order logs
-  stockData = addToOrderLogs(
-    stockData,
-    stockIndex,
-    side,
-    qty,
-    price,
-    balance,
-    dateTime
-  );
+  // if orderHoldUntilProfit enabled and position at a loss
+  if (
+    getOrderRoi(
+      stockData,
+      stockData.stocks[stockIndex].symbol,
+      side,
+      qty,
+      price
+    ) <= 0 &&
+    side == "sell" &&
+    stockData.settings.orderHoldUntilProfit
+  ) {
+    console.log(
+      `ORDER: Sell order for ${stockData.stocks[stockIndex].symbol} cancelled as at a loss and orderHoldUntilProfit enabled`
+    );
+  } else {
+    // complete order
 
-  // update portfolio balance
-  stockData = updateBalance(stockData, side, qty, price);
+    // add order to order logs
+    stockData = addToOrderLogs(
+      stockData,
+      stockIndex,
+      side,
+      qty,
+      price,
+      balance,
+      dateTime
+    );
 
-  // update portfolio
-  stockData = updatePositions(
-    tradingProvider,
-    stockData,
-    stockIndex,
-    side,
-    qty,
-    price,
-    balance
-  );
+    // update portfolio balance
+    stockData = updateBalance(stockData, side, qty, price);
 
-  // reset signals for all stocks
-  stockData = resetPositionsSignals(stockData);
+    // update portfolio
+    stockData = updatePositions(
+      tradingProvider,
+      stockData,
+      stockIndex,
+      side,
+      qty,
+      price,
+      balance
+    );
 
-  console.log(
-    `ORDER: ${side} / ${moment(dateTime).format(
-      "DD/MM/YYYY h:mm:ss a"
-    )} >>>>>>> ${stockData.stocks[stockIndex].symbol} (amount: ${qty *
-      price} / balanceBefore: ${balance} / balanceAfter: ${
-      stockData.portfolio.cash
-    })`
-  );
+    // reset signals for all stocks
+    stockData = resetPositionsSignals(stockData);
+  }
 
   return stockData;
 };
@@ -289,25 +307,25 @@ const checkOrderedTooRecently = (settings, orders, symbol, side, dateTime) => {
  * Calculates ROI from last buy order and current sell order
  *
  * @param {Object} stockData
- * @param {number} stockIndex
  * @param {string} symbol
  * @param {string} side
+ * @param {number} qty
  * @param {number} price
  *
  * @returns {number} roi
  */
-const getOrderRoi = (stockData, stockIndex, side, qty, price) => {
+const getOrderRoi = (stockData, symbol, side, qty, price) => {
   let roi = 0;
   let amount = qty && price ? qty * price : 0;
 
   if (side == "sell" && amount > 0) {
     let orderIndex = _.findLastIndex(stockData.orders, {
       side: "buy",
-      symbol: stockData.stocks[stockIndex].symbol
+      symbol: symbol
     });
 
     if (
-      _.isEmpty(stockData.orders) &&
+      !_.isEmpty(stockData.orders) &&
       orderIndex &&
       typeof stockData.orders[orderIndex] !== "undefined"
     ) {
@@ -345,7 +363,13 @@ const addToOrderLogs = (
   dateTime
 ) => {
   let amount = qty * price;
-  let roi = getOrderRoi(stockData, stockIndex, side, qty, price);
+  let roi = getOrderRoi(
+    stockData,
+    stockData.stocks[stockIndex].symbol,
+    side,
+    qty,
+    price
+  );
 
   let order = {
     symbol: stockData.stocks[stockIndex].symbol,
@@ -353,11 +377,14 @@ const addToOrderLogs = (
     qty: qty,
     price: price,
     amount: amount,
-    balanceAtBuy: parseInt(balance),
-    balanceAtSell: parseInt(stockData.portfolio.cash),
+    balanceAtBuy: !isNaN(parseFloat(balance)) ? parseFloat(balance) : 0,
+    balanceAtSell: !isNaN(parseFloat(stockData.portfolio.cash))
+      ? parseFloat(stockData.portfolio.cash)
+      : 0,
     signals: stockData.stocks[stockIndex].signals,
     session: stockData.session._id,
     roi: roi,
+    clientOrderId: null,
     processed: stockData.settings.isBacktest ? true : false,
     cancelled: false,
     dateTime: dateTime

@@ -1,18 +1,8 @@
 let host = location.origin;
 
-// let port = "<%= port %>";
-// let socket = io(host,
-//   {
-//     withCredentials: true
-//   }
-// );
-
 let socket = io(host);
 
-// autoConnect: 10000
-// transports: ["websocket"],
-
-function stockSignalWeighting(signals) {
+const stockSignalWeighting = signals => {
   let weightingsBuy = 0;
   let weightingsSell = 0;
   signals.forEach((signal, index) => {
@@ -24,7 +14,7 @@ function stockSignalWeighting(signals) {
   });
 
   return { buy: weightingsBuy, sell: weightingsSell };
-}
+};
 
 document.getElementById("clock").innerHTML = moment().format(
   "DD/MM/YYYY h:mm:ss a"
@@ -141,12 +131,18 @@ socket.on("receive_positions", data => {
 
 socket.on("receive_orders", data => {
   if (data instanceof Array) {
+    while (ordersList.lastElementChild) {
+      ordersList.removeChild(ordersList.lastElementChild);
+    }
+
     data.forEach((order, index) => {
       let row = document.createElement("tr");
       row.setAttribute("id", "order-" + order.symbol);
 
       let dateTime = document.createElement("td");
-      dateTime.textContent = "-";
+      dateTime.textContent = moment(data.dateTime).format(
+        "DD/MM/YYYY h:mm:ss a"
+      );
       row.appendChild(dateTime);
 
       let symbol = document.createElement("td");
@@ -162,7 +158,9 @@ socket.on("receive_orders", data => {
       row.appendChild(qty);
 
       let price = document.createElement("td");
-      price.textContent = parseFloat(order.price).toFixed(2);
+      price.textContent = order.price
+        ? parseFloat(order.price).toFixed(2)
+        : "-";
       row.appendChild(price);
 
       let roiData = parseFloat(order.roi).toFixed(6);
@@ -185,8 +183,6 @@ socket.on("receive_orders", data => {
       ordersList.prepend(row);
     });
   } else {
-    console.log(data.roi);
-
     let row = document.createElement("tr");
     row.setAttribute("id", "order-" + data.symbol);
 
