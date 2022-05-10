@@ -1,5 +1,5 @@
 {
-  "thresholdToBuy": 40,
+  "thresholdToBuy": 35,
   "thresholdToSell": 25,
   "useStandardAlgos": false,
   "restrictons": [
