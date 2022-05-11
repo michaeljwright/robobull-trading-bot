@@ -1,4 +1,4 @@
-FROM node:12
+FROM node:16
 
 RUN ["mkdir", "/install"]
 ADD ["./package.json", "/install"]

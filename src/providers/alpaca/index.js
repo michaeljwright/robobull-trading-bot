@@ -1,5 +1,4 @@
 const _ = require("lodash");
-const moment = require("moment-timezone");
 
 const baseProvider = require("./base");
 const backtestProvider = require("./backtest");
@@ -40,9 +39,9 @@ const alpacaLive = async (settings, session, io) => {
   // Check market is open first
   await trading
     .getClock()
-    .then(async res => {
+    .then(async (res) => {
       if (res.is_open) {
-        trading.getAccount().then(account => {
+        trading.getAccount().then((account) => {
           if (account.pattern_day_trader) {
             console.log(
               "Is this trading account flagged as PDT? " +
@@ -56,7 +55,7 @@ const alpacaLive = async (settings, session, io) => {
 
           trading
             .getPositions()
-            .then(async positions => {
+            .then(async (positions) => {
               // get orders from today (in case of previous failure)
               let orders = await baseProvider.syncOrders(session, io);
 
@@ -71,13 +70,13 @@ const alpacaLive = async (settings, session, io) => {
                   session,
                   io
                 )
-                .then(stockData => {
+                .then((stockData) => {
                   // write socket to frontend trading terminal
                   outputs.writeOutput(
                     {
                       startValue: stockData.portfolio.startingCapital,
                       endValue: stockData.portfolio.cash,
-                      roi: 0
+                      roi: 0,
                     },
                     "receive_result",
                     stockData.io,
@@ -137,20 +136,21 @@ const alpacaLive = async (settings, session, io) => {
 
                       setInterval(
                         async () =>
-                          (stockData = await baseProvider.checkOrdersToBeProcessed(
-                            trading,
-                            stockData
-                          )),
+                          (stockData =
+                            await baseProvider.checkOrdersToBeProcessed(
+                              trading,
+                              stockData
+                            )),
                         5000 // check for new orders to process every 5 secs
                       );
                     }
                   });
 
-                  client.onError(err => {
+                  client.onError((err) => {
                     console.log(err);
                   });
 
-                  client.onStockBar(async data => {
+                  client.onStockBar(async (data) => {
                     if (stockData.haltTrading !== true) {
                       // loop through algos for calculations
                       stockData = tradingAlgos.calculateAlgos(
@@ -169,7 +169,7 @@ const alpacaLive = async (settings, session, io) => {
                   client.connect();
                 });
             })
-            .catch(async err => {
+            .catch(async (err) => {
               console.log("ERROR: ALPACA POSITIONS");
               console.log(err);
               await database.mongodbClose();
@@ -185,7 +185,7 @@ const alpacaLive = async (settings, session, io) => {
         await database.mongodbClose();
       }
     })
-    .catch(async err => {
+    .catch(async (err) => {
       outputs.writeOutput(
         "ERROR: ALPACA CLOCK",
         "receive_market_closed",
@@ -199,5 +199,5 @@ const alpacaLive = async (settings, session, io) => {
 
 module.exports = {
   initialize,
-  alpacaLive
+  alpacaLive,
 };

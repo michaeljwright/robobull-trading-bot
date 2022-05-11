@@ -2,6 +2,8 @@ const fs = require("fs");
 const path = require("path");
 const _ = require("lodash");
 const axios = require("axios");
+const fetch = require("cross-fetch");
+const moment = require("moment-timezone");
 
 const tradingPortfolio = require("./portfolio");
 const tradingAlgos = require("./algos");
@@ -36,7 +38,7 @@ const subscribeToStocks = (client, stocks, settings) => {
  *
  * @returns {Object[]} stocks
  */
-const getStocks = async settings => {
+const getStocks = async (settings) => {
   let defaultStocks = JSON.parse(fs.readFileSync(stocksFile));
   let stocks = [];
 
@@ -69,7 +71,7 @@ const getStocks = async settings => {
  * @returns {Promise} stock
  */
 const getStockQuote = async (stock, settings) => {
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve, reject) {
     let financialModelingPrepApiKey =
       process.env.FINANCIAL_MODELING_PREP_API_KEY;
 
@@ -81,7 +83,7 @@ const getStockQuote = async (stock, settings) => {
             "?apikey=" +
             financialModelingPrepApiKey
         )
-        .then(response => {
+        .then((response) => {
           if (!_.isEmpty(response.data)) {
             stock = response.data[0];
             resolve(stock);
@@ -91,7 +93,7 @@ const getStockQuote = async (stock, settings) => {
             resolve([]);
           }
         })
-        .catch(function(err) {
+        .catch(function (err) {
           console.log("ERROR: StockQuote api error");
           console.error(err);
           resolve([]);
@@ -128,7 +130,10 @@ const initializeStockData = async (
   session = null,
   io = null,
   limit = 150,
-  until = new Date(),
+  until = moment
+    .tz(moment(), "America/New_York")
+    .subtract(16, "minutes")
+    .format(), // 16 minutes time delay for Alpaca market data (East coast timezone)
   lastOrder = "SELL"
 ) => {
   let stockData = {
@@ -143,10 +148,10 @@ const initializeStockData = async (
       startingCapital: settings.startingCapital,
       cash: settings.startingCapital,
       positions: [], // list of current portfolio positions
-      tmp: []
+      tmp: [],
     },
     orders: orders, // list of orders (buy/sell) based on signals
-    stocks: [] // list of subscribed stocks
+    stocks: [], // list of subscribed stocks
   };
 
   if (!settings.isBacktest) {
@@ -155,25 +160,69 @@ const initializeStockData = async (
       stocks = _.union(stocks, _.map(positions, "symbol"));
     }
 
-    // subscribe to stocks for market data via web socket
-    await tradingProvider
-      .getBars("1Min", stocks, {
-        limit: limit,
-        until: until
+    // retrieve historical market data for specified stocks
+    const start = moment().format("YYYY-MM-DD") + "T00:00:00.000Z";
+    await fetch(
+      "https://data.alpaca.markets/v2/stocks/bars?symbols=" +
+        stocks.toString() +
+        "&start=" +
+        start +
+        "&end=" +
+        until +
+        "&timeframe=1Min",
+      {
+        method: "GET",
+        headers: {
+          "Apca-Api-Key-Id": process.env.API_KEY,
+          "Apca-Api-Secret-Key": process.env.SECRET_API_KEY,
+        },
+      }
+    )
+      .then((response) => {
+        if (response.status >= 400) {
+          console.log("ERROR: AlpacaMarketDataV2");
+          stockData.stocks = createStockData(
+            [],
+            stocks,
+            settings.isBacktest,
+            lastOrder
+          );
+        }
+        return response.json();
       })
-      .then(async data => {
+      .then(async (response) => {
+        if (response) {
+          // create stockData for new stocks
+          stockData.stocks = createStockData(
+            response.bars,
+            stocks,
+            settings.isBacktest,
+            lastOrder
+          );
+
+          // sync portfolio positions
+          stockData = await tradingPortfolio.syncPortfolioPostions(
+            tradingProvider,
+            stockData,
+            positions
+          );
+        } else {
+          stockData.stocks = createStockData(
+            [],
+            stocks,
+            settings.isBacktest,
+            lastOrder
+          );
+        }
+      })
+      .catch((err) => {
+        console.log("ERROR: AlpacaMarketDataV2");
+        console.error(err);
         stockData.stocks = createStockData(
-          data,
+          [],
           stocks,
           settings.isBacktest,
           lastOrder
-        );
-
-        // sync portfolio positions
-        stockData = await tradingPortfolio.syncPortfolioPostions(
-          tradingProvider,
-          stockData,
-          positions
         );
       });
   } else {
@@ -203,37 +252,69 @@ const initializeStockData = async (
  * @returns {Object} stockData
  */
 const updateStockData = async (
-  tradingProvider,
   stocks,
   stockData,
   limit = 150,
-  until = new Date(),
+  until = moment
+    .tz(moment(), "America/New_York")
+    .subtract(16, "minutes")
+    .format(), // 16 minutes time delay for Alpaca market data (East coast timezone)
   lastOrder = "SELL"
 ) => {
   if (!stockData.settings.isBacktest) {
-    // subscribe to stocks for market data via web socket
-    await tradingProvider
-      .getBars("1Min", stocks, {
-        limit: limit,
-        until: until
+    // sync stocks for market data
+    const start = moment().format("YYYY-MM-DD") + "T00:00:00.000Z";
+    await fetch(
+      "https://data.alpaca.markets/v2/stocks/bars?symbols=" +
+        stocks.toString() +
+        "&start=" +
+        start +
+        "&end=" +
+        until +
+        "&timeframe=1Min",
+      {
+        method: "GET",
+        headers: {
+          "Apca-Api-Key-Id": process.env.API_KEY,
+          "Apca-Api-Secret-Key": process.env.SECRET_API_KEY,
+        },
+      }
+    )
+      .then((response) => {
+        if (response.status >= 400) {
+          console.log("ERROR: AlpacaMarketDataV2");
+          stockData.stocks = createStockData(
+            [],
+            stocks,
+            settings.isBacktest,
+            lastOrder
+          );
+        }
+        return response.json();
       })
-      .then(async data => {
-        // save old stockData
-        let oldStockData = stockData.stocks;
+      .then(async (response) => {
+        if (response) {
+          // save old stockData
+          let oldStockData = stockData.stocks;
 
-        // create stockData for new stocks
-        stockData.stocks = createStockData(
-          data,
-          stocks,
-          stockData.settings.isBacktest,
-          lastOrder
-        );
+          // create stockData for new stocks
+          stockData.stocks = createStockData(
+            response.bars,
+            stocks,
+            stockData.settings.isBacktest,
+            lastOrder
+          );
 
-        // loop through algos to create initial setup for each stock
-        stockData = tradingAlgos.initializeAlgos(stockData);
+          // loop through algos to create initial setup for each stock
+          stockData = tradingAlgos.initializeAlgos(stockData);
 
-        // merge new and old stockData together
-        stockData.stocks = _.union(stockData.stocks, oldStockData);
+          // merge new and old stockData together
+          stockData.stocks = _.union(stockData.stocks, oldStockData);
+        }
+      })
+      .catch((err) => {
+        console.log("ERROR: AlpacaMarketDataV2");
+        console.error(err);
       });
   }
 
@@ -258,13 +339,13 @@ const createStockData = (data, stocks, isBacktest, lastOrder) => {
   let lowValues = [];
   let volumeValues = [];
 
-  _.forOwn(stocks, stock => {
-    if (!isBacktest) {
-      openValues = _.map(data[stock], bar => bar.openPrice);
-      closeValues = _.map(data[stock], bar => bar.closePrice);
-      highValues = _.map(data[stock], bar => bar.highPrice);
-      lowValues = _.map(data[stock], bar => bar.lowPrice);
-      volumeValues = _.map(data[stock], bar => bar.volume);
+  _.forOwn(stocks, (stock) => {
+    if (!isBacktest && data) {
+      openValues = _.map(data[stock], (bar) => bar.o);
+      closeValues = _.map(data[stock], (bar) => bar.c);
+      highValues = _.map(data[stock], (bar) => bar.h);
+      lowValues = _.map(data[stock], (bar) => bar.l);
+      volumeValues = _.map(data[stock], (bar) => bar.v);
     }
 
     stockData.push({
@@ -277,7 +358,7 @@ const createStockData = (data, stocks, isBacktest, lastOrder) => {
       highValues: highValues,
       lowValues: lowValues,
       volumeValues: volumeValues,
-      price: 0
+      price: 0,
     });
   });
 
@@ -290,5 +371,5 @@ module.exports = {
   getStockQuote,
   initializeStockData,
   updateStockData,
-  createStockData
+  createStockData,
 };

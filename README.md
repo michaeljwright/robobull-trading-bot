@@ -16,9 +16,9 @@ The bot currently supports both live trading (paper account recommended) and his
 
 ### Stock Screener - Get up-to-date, ranked stocks every 15mins!
 
-We've integrated our Stock Screener into this project which provides market analyses and top performing stocks. We aim to provide this data for FREE as long as we can. Donations welcome for upkeep!
+Unfortunately we no longer have an integrated Stock Screener for this project which provides market analyses and top performing stocks. Donations welcome to reactivate it!
 
-_Tip:_ If you don't want to use our stock screener you can simply disabled it by setting **useStockScreener** to false.
+_Tip:_ If you want to use our stock screener, please get in touch and then enabled it by setting **useStockScreener** to true.
 
 ### Installation
 
