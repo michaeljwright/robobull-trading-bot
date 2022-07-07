@@ -100,7 +100,6 @@ const getStockQuote = async (stock, settings) => {
             resolve(stock);
           } else {
             console.log("ERROR: StockQuote data empty");
-            console.log(response);
             resolve([]);
           }
         })
