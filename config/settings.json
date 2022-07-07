@@ -15,13 +15,16 @@
   "orderHoldUntilProfit": false,
   "roiToClosePositions": 0.5,
   "roiToResetPositions": -0.5,
+  "orderedAlreadyToday": true,
   "startDate": "2021-02-01 00:00:00",
   "endDate": "2021-02-01 00:00:00",
   "useClosePositionsBeforeMarketClose": true,
   "usePreviousUserSession": false,
   "useDefaultStocks": true,
   "useStockScreener": false,
+  "stockDataLimit": 40,
   "useStockQuotePercentage": false,
+  "enableCrypto": false,
   "stockQuotePercentageChangeRangeTo": 15,
   "stockQuotePercentageChangeRangeFrom": 1
 }

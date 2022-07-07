@@ -5,7 +5,7 @@ const {
   getPositions,
   updatePositions,
   updateBalance,
-  resetPositionsSignals
+  resetPositionsSignals,
 } = require("./positions");
 
 const database = require("./database");
@@ -64,6 +64,10 @@ const createOrder = (
       ? amountOfPositions / thresholdRiskAllocation
       : thresholdRiskAllocation;
 
+  if (amountOfStocks < 50) {
+    thresholdRiskAllocation = thresholdRiskAllocation / 2;
+  }
+
   let portfolioPercentage =
     (thresholdCapitalAllowance / amountOfStocks) * thresholdRiskAllocation;
 
@@ -120,6 +124,7 @@ const createOrder = (
   // if already ordered stock then decline order buy
   if (
     !settings.isBacktest &&
+    settings.orderedAlreadyToday &&
     checkOrderedAlready(stockData.orders, symbol, side)
   ) {
     processOrder = false;
@@ -195,7 +200,7 @@ const addOrderToQueue = (
       qty: qty,
       side: side,
       type: "market",
-      time_in_force: "day"
+      time_in_force: "day",
     });
 
     console.log(
@@ -288,7 +293,7 @@ const checkOrderedTooRecently = (settings, orders, symbol, side, dateTime) => {
   if (dateTime) {
     let blockedOrders = _.filter(
       orders,
-      order =>
+      (order) =>
         order.symbol == symbol &&
         moment
           .duration(moment(order.dateTime).diff(moment(dateTime)))
@@ -321,7 +326,7 @@ const getOrderRoi = (stockData, symbol, side, qty, price) => {
   if (side == "sell" && amount > 0) {
     let orderIndex = _.findLastIndex(stockData.orders, {
       side: "buy",
-      symbol: symbol
+      symbol: symbol,
     });
 
     if (
@@ -387,7 +392,7 @@ const addToOrderLogs = (
     clientOrderId: null,
     processed: stockData.settings.isBacktest ? true : false,
     cancelled: false,
-    dateTime: dateTime
+    dateTime: dateTime,
   };
 
   stockData.orders.push(order);
@@ -415,5 +420,5 @@ module.exports = {
   checkOrderedTooRecently,
   getOrderRoi,
   addToOrderLogs,
-  addOrderToQueue
+  addOrderToQueue,
 };
