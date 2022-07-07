@@ -116,6 +116,17 @@ const getStockQuote = async (stock, settings) => {
   });
 };
 
+/**
+ * Gets market data for US securities based on given parameters such as stock symbols + start/end date
+ *
+ * @param {(Alpaca|TradingProvider)} tradingProvider
+ * @param {Object[]} stocks
+ * @param {Date} start
+ * @param {Date} end
+ * @param {number} limit
+ *
+ * @returns {Object[]} cryptoBars
+ */
 const getMarketData = async (
   tradingProvider,
   stocks,
@@ -143,6 +154,17 @@ const getMarketData = async (
   return marketBars;
 };
 
+/**
+ * Gets market data for Crypto based on given parameters such as symbols + start/end date
+ *
+ * @param {(Alpaca|TradingProvider)} tradingProvider
+ * @param {Object[]} cryptoSymbols
+ * @param {Date} start
+ * @param {Date} end
+ * @param {number} limit
+ *
+ * @returns {Object[]} cryptoBars
+ */
 const getCryptoData = async (cryptoSymbols, start, end, limit = 10000) => {
   let cryptoBars = null;
 
@@ -283,70 +305,6 @@ const initializeStockData = async (
         lastOrder
       );
     }
-
-    // await fetch(
-    //   "https://data.alpaca.markets/v2/stocks/bars?symbols=" +
-    //     stocks.toString() +
-    //     "&start=" +
-    //     start +
-    //     "&end=" +
-    //     until +
-    //     "&timeframe=1Min",
-    //   {
-    //     method: "GET",
-    //     headers: {
-    //       "Apca-Api-Key-Id": process.env.API_KEY,
-    //       "Apca-Api-Secret-Key": process.env.SECRET_API_KEY,
-    //     },
-    //   }
-    // )
-    //   .then((response) => {
-    //     if (response.status >= 400) {
-    //       console.log("ERROR: AlpacaMarketDataV2");
-    //       stockData.stocks = createStockData(
-    //         [],
-    //         stocks,
-    //         settings.isBacktest,
-    //         lastOrder
-    //       );
-    //     }
-    //     return response.json();
-    //   })
-    //   .then(async (response) => {
-    //     if (response) {
-    //       // create stockData for new stocks
-    //       stockData.stocks = createStockData(
-    //         response.bars,
-    //         stocks,
-    //         settings.isBacktest,
-    //         lastOrder
-    //       );
-    //
-    //       // sync portfolio positions
-    //       stockData = await tradingPortfolio.syncPortfolioPostions(
-    //         tradingProvider,
-    //         stockData,
-    //         positions
-    //       );
-    //     } else {
-    //       stockData.stocks = createStockData(
-    //         [],
-    //         stocks,
-    //         settings.isBacktest,
-    //         lastOrder
-    //       );
-    //     }
-    //   })
-    //   .catch((err) => {
-    //     console.log("ERROR: AlpacaMarketDataV2");
-    //     console.error(err);
-    //     stockData.stocks = createStockData(
-    //       [],
-    //       stocks,
-    //       settings.isBacktest,
-    //       lastOrder
-    //     );
-    //   });
   } else {
     stockData.stocks = createStockData(
       [],
@@ -432,91 +390,6 @@ const updateStockData = async (
         lastOrder
       );
     }
-
-    //   if (!stockData.settings.enableCrypto) {
-    //     await fetch(
-    //       "https://data.alpaca.markets/v2/stocks/bars?symbols=" +
-    //         stocks.toString() +
-    //         "&start=" +
-    //         start +
-    //         "&end=" +
-    //         until +
-    //         "&timeframe=1Min",
-    //       {
-    //         method: "GET",
-    //         headers: {
-    //           "Apca-Api-Key-Id": process.env.API_KEY,
-    //           "Apca-Api-Secret-Key": process.env.SECRET_API_KEY,
-    //         },
-    //       }
-    //     )
-    //       .then((response) => {
-    //         if (response.status >= 400) {
-    //           console.log("ERROR: AlpacaMarketDataV2");
-    //           stockData.stocks = createStockData(
-    //             [],
-    //             stocks,
-    //             settings.isBacktest,
-    //             lastOrder
-    //           );
-    //         }
-    //         return response.json();
-    //       })
-    //       .then(async (response) => {
-    //         if (response) {
-    //           // save old stockData
-    //           let oldStockData = stockData.stocks;
-    //
-    //           // create stockData for new stocks
-    //           stockData.stocks = createStockData(
-    //             response.bars,
-    //             stocks,
-    //             stockData.settings.isBacktest,
-    //             lastOrder
-    //           );
-    //
-    //           // loop through algos to create initial setup for each stock
-    //           stockData = tradingAlgos.initializeAlgos(stockData);
-    //
-    //           // merge new and old stockData together
-    //           stockData.stocks = _.union(stockData.stocks, oldStockData);
-    //         }
-    //       })
-    //       .catch((err) => {
-    //         console.log("ERROR: AlpacaMarketDataV2");
-    //         console.error(err);
-    //       });
-    //   } else {
-    //     const bars = await getCryptoData(stocks, start, until);
-    //
-    //     if (!bars) {
-    //       console.log("ERROR: AlpacaMarketDataV2");
-    //       stockData.stocks = createStockData(
-    //         [],
-    //         stocks,
-    //         settings.isBacktest,
-    //         lastOrder
-    //       );
-    //     } else {
-    //       // save old stockData
-    //       let oldStockData = stockData.stocks;
-    //
-    //       // create stockData for new stocks
-    //       stockData.stocks = createStockData(
-    //         bars,
-    //         stocks,
-    //         stockData.settings.isBacktest,
-    //         lastOrder,
-    //         true
-    //       );
-    //
-    //       // loop through algos to create initial setup for each stock
-    //       stockData = tradingAlgos.initializeAlgos(stockData);
-    //
-    //       // merge new and old stockData together
-    //       stockData.stocks = _.union(stockData.stocks, oldStockData);
-    //     }
-    //   }
   }
 
   return stockData;
@@ -556,12 +429,9 @@ const createStockData = (
         lowValues = _.map(data[stock], (bar) => bar.l);
         volumeValues = _.map(data[stock], (bar) => bar.v);
       } else {
-        console.log("Stock: ", stock);
         const stockMap = _.filter(data, (record) =>
           record.Symbol.includes(stock)
         );
-        console.log("stockMap data: ");
-        console.log(stockMap);
         openValues = _.map(stockMap, (bar) => bar.OpenPrice);
         closeValues = _.map(stockMap, (bar) => bar.ClosePrice);
         highValues = _.map(stockMap, (bar) => bar.HighPrice);
@@ -569,8 +439,6 @@ const createStockData = (
         volumeValues = _.map(stockMap, (bar) => bar.Volume);
       }
     }
-
-    console.log("closeValues: ", closeValues);
 
     stockData.push({
       symbol: stock,

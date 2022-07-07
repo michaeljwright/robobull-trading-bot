@@ -37,22 +37,6 @@ const alpacaLive = async (settings, session, io) => {
   await trading
     .getClock()
     .then(async (res) => {
-      // const start = moment().format("YYYY-MM-DD") + "T00:00:00.000Z";
-      // const until = moment
-      //   .tz(moment(), "America/New_York")
-      //   .subtract(16, "minutes")
-      //   .format();
-      // const bars = trading.getMultiBarsAsyncV2(["AFL", "SPGI"], {
-      //   start: start,
-      //   end: until,
-      //   timeframe: "1Min",
-      // });
-      // const got = [];
-      // for await (let b of bars) {
-      //   got.push(b);
-      // }
-      // console.log("bars: ", got);
-
       // Check market is open first (or crypto setting is enabled)
       if (res.is_open || settings.enableCrypto) {
         if (settings.enableCrypto) {
