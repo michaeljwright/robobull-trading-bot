@@ -271,7 +271,6 @@ const initializeStockData = async (
       }
 
       if (bars) {
-        console.log("Data: ", bars);
         // create stockData for new stocks
         stockData.stocks = createStockData(
           bars,
@@ -360,7 +359,7 @@ const updateStockData = async (
 
         // create stockData for new stocks
         stockData.stocks = createStockData(
-          response.bars,
+          bars,
           stocks,
           stockData.settings.isBacktest,
           lastOrder,

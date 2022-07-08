@@ -266,7 +266,7 @@ const checkOrdersToBeProcessed = async (tradingProvider, stockData) => {
             })
             .then(async (res) => {
               // update orders if order successful
-              if (res.status == "accepted") {
+              if (res.status === "accepted" || res.status === "pending_new") {
                 // update order properties
                 order.processed = true;
                 order.dateTime = moment
@@ -378,32 +378,38 @@ const updateSubcribedStocks = async (tradingProvider, stockData, client) => {
 
       // add current positions to stocks to be subscribed to
       if (positions.length > 0) {
-        stocks = _.union(stocks, _.map(positions, "symbol"));
+        stocks = _.take(
+          _.union(stocks, _.map(positions, "symbol")),
+          stockData.settings.stockDataLimit
+        );
       }
 
       if (stocks.length > 0) {
         // update stockData to keep current positions
-        await tradingStocks
-          .updateStockData(tradingProvider, stocks, stockData)
-          .then((updatedStockData) => {
-            stockData = updatedStockData;
-            tradingStocks.subscribeToStocks(client, stocks, stockData.settings);
+        const updatedStockData = await tradingStocks.updateStockData(
+          tradingProvider,
+          stocks,
+          stockData
+        );
 
-            // sync position, calculate profit and write socket to frontend trading terminal
-            stockData = syncPortfolioPostions(
-              tradingProvider,
-              stockData,
-              positions
-            );
-          })
-          .catch((err) => {
-            errors.log(
-              "ERROR: ALPACA POSITIONS ON STOCKDATA UPDATE",
-              "info",
-              true
-            );
-            errors.log(err, "error");
-          });
+        if (updatedStockData) {
+          stockData = updatedStockData;
+          tradingStocks.subscribeToStocks(client, stocks, stockData.settings);
+
+          // sync position, calculate profit and write socket to frontend trading terminal
+          stockData = syncPortfolioPostions(
+            tradingProvider,
+            stockData,
+            positions
+          );
+        } else {
+          console.log("ERROR: ALPACA POSITIONS ON STOCKDATA UPDATE");
+          errors.log(
+            "ERROR: ALPACA POSITIONS ON STOCKDATA UPDATE",
+            "info",
+            true
+          );
+        }
       } else {
         errors.log("ERROR: NO NEW STOCKS TO SUBCRIBE TO", "info", true);
       }
