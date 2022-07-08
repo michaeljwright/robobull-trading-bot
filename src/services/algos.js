@@ -55,7 +55,7 @@ const addAlgoWeighting = (algos, algo) => {
  *
  * @returns {boolean}
  */
-const validateThresholdConditionAttribute = nextValues => {
+const validateThresholdConditionAttribute = (nextValues) => {
   let valid = true;
 
   _.forOwn(nextValues, (valueObject, valueIndex) => {
@@ -142,7 +142,7 @@ const algoThresholdsOperator = (
  *
  * @returns {Object} stockData
  */
-const initializeAlgos = stockData => {
+const initializeAlgos = (stockData) => {
   _.forOwn(getAlgos().thresholds, (algoObject, algoName) => {
     if (
       algoObject.enabled &&
@@ -168,7 +168,7 @@ const initializeAlgo = (algo, stockData) => {
   let algoThresholds = getAlgoThresholds(getAlgos(), algo);
 
   _.forOwn(stockData.stocks, (stock, index) => {
-    _.forOwn(algoThresholds.periods, period => {
+    _.forOwn(algoThresholds.periods, (period) => {
       let input = {};
 
       if (period.hasOpen) {
@@ -296,13 +296,13 @@ const calculateAlgo = (algo, tradingProvider, stockData, subject, data) => {
   let algoThresholds = getAlgoThresholds(algos, algo);
   let dateTime = data.Timestamp
     ? moment.tz(data.Timestamp, process.env.TIMEZONE).valueOf()
-    : moment()
-        .tz(process.env.TIMEZONE)
-        .valueOf();
+    : moment().tz(process.env.TIMEZONE).valueOf();
   let stockIndex = _.findIndex(stockData.stocks, { subject: subject });
 
   // get next values
-  let closePrice = data.ClosePrice;
+  let closePrice = !stockData.settings.enableCrypto
+    ? data.ClosePrice
+    : data.Close;
   let nextValue;
 
   if (
@@ -316,19 +316,27 @@ const calculateAlgo = (algo, tradingProvider, stockData, subject, data) => {
     nextValue = {};
 
     if (algoThresholds.periods[0].hasOpen) {
-      nextValue.open = data.OpenPrice;
+      nextValue.open = !stockData.settings.enableCrypto
+        ? data.OpenPrice
+        : data.Open;
     }
 
     if (algoThresholds.periods[0].hasClose) {
-      nextValue.close = data.ClosePrice;
+      nextValue.close = !stockData.settings.enableCrypto
+        ? data.ClosePrice
+        : data.Close;
     }
 
     if (algoThresholds.periods[0].hasHigh) {
-      nextValue.high = data.HighPrice;
+      nextValue.high = !stockData.settings.enableCrypto
+        ? data.HighPrice
+        : data.High;
     }
 
     if (algoThresholds.periods[0].hasLow) {
-      nextValue.low = data.LowPrice;
+      nextValue.low = !stockData.settings.enableCrypto
+        ? data.LowPrice
+        : data.Low;
     }
 
     if (algoThresholds.periods[0].hasVolume) {
@@ -338,14 +346,20 @@ const calculateAlgo = (algo, tradingProvider, stockData, subject, data) => {
 
   // loop through periods for algo calculation and get next value
   let nextValues = [];
-  _.forOwn(algoThresholds.periods, period => {
-    nextValues.push(
-      stockData.stocks[stockIndex][period.name].nextValue(nextValue)
-    );
+  _.forOwn(algoThresholds.periods, (period) => {
+    if (typeof stockData.stocks[stockIndex][period.name] !== "undefined") {
+      nextValues.push(
+        stockData.stocks[stockIndex][period.name].nextValue(nextValue)
+      );
+    } else {
+      console.log(
+        `ERROR: Algo threshold period ${period.name} not found for ${subject}`
+      );
+    }
   });
 
   // loop through signal conditions for comparison calculations
-  _.forOwn(algoThresholds.conditions, condition => {
+  _.forOwn(algoThresholds.conditions, (condition) => {
     if (
       validateThresholdConditionAttribute(nextValues) &&
       algoThresholdsOperator(
@@ -406,11 +420,11 @@ const hasEnoughStockDataValues = (stockData, stockIndex, dataCount = 10) => {
  */
 const calculateStandardAlgos = (tradingProvider, stockData, subject, data) => {
   let stockIndex = _.findIndex(stockData.stocks, { subject: subject });
-  let closePrice = data.ClosePrice;
+  let closePrice = !stockData.settings.enableCrypto
+    ? data.ClosePrice
+    : data.Close;
   let dateTime = data.Timestamp
-    ? moment(data.Timestamp)
-        .unix()
-        .valueOf()
+    ? moment(data.Timestamp).unix().valueOf()
     : moment().unix();
 
   if (
@@ -424,7 +438,7 @@ const calculateStandardAlgos = (tradingProvider, stockData, subject, data) => {
         open: stockData.stocks[stockIndex].openValues,
         close: stockData.stocks[stockIndex].closeValues,
         high: stockData.stocks[stockIndex].highValues,
-        low: stockData.stocks[stockIndex].lowValues
+        low: stockData.stocks[stockIndex].lowValues,
       })
     ) {
       stockData = addSignal(
@@ -446,7 +460,7 @@ const calculateStandardAlgos = (tradingProvider, stockData, subject, data) => {
         open: stockData.stocks[stockIndex].openValues,
         close: stockData.stocks[stockIndex].closeValues,
         high: stockData.stocks[stockIndex].highValues,
-        low: stockData.stocks[stockIndex].lowValues
+        low: stockData.stocks[stockIndex].lowValues,
       })
     ) {
       stockData = addSignal(
@@ -482,12 +496,22 @@ const updateStockDataAfterCalculation = (stockData, subject, data) => {
     typeof stockData.stocks[stockIndex] === "object" &&
     stockData.stocks[stockIndex] !== null
   ) {
-    stockData.stocks[stockIndex].closeValues.push(data.ClosePrice);
-    stockData.stocks[stockIndex].openValues.push(data.OpenPrice);
-    stockData.stocks[stockIndex].highValues.push(data.HighPrice);
-    stockData.stocks[stockIndex].lowValues.push(data.LowPrice);
+    stockData.stocks[stockIndex].closeValues.push(
+      !stockData.settings.enableCrypto ? data.ClosePrice : data.Close
+    );
+    stockData.stocks[stockIndex].openValues.push(
+      !stockData.settings.enableCrypto ? data.OpenPrice : data.Open
+    );
+    stockData.stocks[stockIndex].highValues.push(
+      !stockData.settings.enableCrypto ? data.HighPrice : data.High
+    );
+    stockData.stocks[stockIndex].lowValues.push(
+      !stockData.settings.enableCrypto ? data.LowPrice : data.Low
+    );
     stockData.stocks[stockIndex].volumeValues.push(data.Volume);
-    stockData.stocks[stockIndex].price = data.ClosePrice;
+    stockData.stocks[stockIndex].price = !stockData.settings.enableCrypto
+      ? data.ClosePrice
+      : data.Close;
   }
 
   // if no algo thresholds saved yet then add now
@@ -509,7 +533,7 @@ const updateStockDataAfterCalculation = (stockData, subject, data) => {
 const resetSignalByStock = (stockData, symbol) => {
   if (stockData.settings.resetSignals) {
     let stockIndex = _.findIndex(stockData.stocks, {
-      symbol: symbol
+      symbol: symbol,
     });
 
     stockData.stocks[stockIndex].signals = [];
@@ -532,5 +556,5 @@ module.exports = {
   hasEnoughStockDataValues,
   calculateStandardAlgos,
   updateStockDataAfterCalculation,
-  resetSignalByStock
+  resetSignalByStock,
 };

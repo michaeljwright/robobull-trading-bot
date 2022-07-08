@@ -69,6 +69,14 @@ The algorithms / technical indicators are massively customizable and have been t
 
 Feel free to tweak the settings in algo.json file as much as you like. A more detailed explanation of algo settings is coming soon. _Tip:_ You may want to increase the thresholdToBuy setting to 40 which will tell the bot to be stricter when buying stocks.
 
+#### crypto.json
+
+Edit your crypto symbols in this file. The crypto will be used for live trading (if enabled). Note: crypto has yet to be tested for backtesting.
+
+### Crypto mode
+
+This feature allows you to run live/paper trading 24/7 with crypto stocks/symbols. In order to run crypto mode you need to enable it by editing **enableCrypto** to true in the settings.json file. You can also edit the crypto symbols that will be subscribed to and traded within the crypto.json file.
+
 ### Run in "Console Only" mode
 
 This feature allows you to run both live/paper trading and back testing without the need of a web browser. In order to do this open a terminal tab:
@@ -108,13 +116,16 @@ Change the following in settings.json, then re-run `docker-compose up` and go to
 - **orderHoldUntilProfit** false - whether to stop selling a position at a loss (holding until profit)
 - **roiToClosePositions** 0.3 - how much the overall ROI must be over to close all current positions and end trading
 - **roiToResetPositions** -0.5 - how much the overall ROI must be below to gradually close poor performing positions (currently disabled / needs refactoring)
+- **orderedAlreadyToday** true - whether a buy order should go through again today if already ordered same stock (probably best to set to false if enableCrypto is true)
 - **startDate** "2021-02-01 00:00:00" - start date used for back testing
 - **endDate** "2021-02-01 00:00:00" - end date used for back testing
 - **useClosePositionsBeforeMarketClose** true/false - closes/sells all open positions before market is closed (default: true)
 - **usePreviousUserSession** true/false - to use previous user's session (no longer exists, default: false)
 - **useDefaultStocks** true/false - to use a list of stocks by default and also required for back testing (default: true)
 - **useStockScreener** true/false - to use a list of high performing stocks from RoboBull Stock Screener every 15mins to ensure that best stocks are used during live/paper trading (default: true, fallback if empty is to use default stocks)
+- **stockDataLimit** 40 - to set the maximum amount of stocks (or crypto) to subscribe to (note: useful if real-time Market data is limited to a certain amount of stocks)
 - **useStockQuotePercentage** true/false - to use Financial Modeling Prep API for latest stock percentage change before ordering. Requires third-party API key. (default: false)
+- **enableCrypto** false - to use if you want to enable crypto (note: this will stop trading US securities)
 - **stockQuotePercentageChangeRangeTo** 15 - how much of a percentage that a stock's change can be increased up to when processing order. This is to help against volatile stocks along with pump and dumps (only used during live/paper trading)
 - **stockQuotePercentageChangeRangeFrom** 1 - currently not used
 
@@ -143,8 +154,9 @@ We love these dependencies to speed up development!
 ```
 ├── config
 │ ├── algos.json # structured data for your algorithms / technical indicators along with weighting thresholds
-│ ├── settings.json #
-│ └── stocks.json #
+│ ├── crypto.json # default selection of crypto to subscribe to (if enabled)
+│ ├── settings.json # default settings for the trading bot
+│ └── stocks.json # default selection of stocks to subscribe to
 ├── data # files used for persistent mongo data storage (git ignored)
 ├── docker # files required to run project in self contained docker environment
 ├── public # files required for frontend views such as css styling and javascript

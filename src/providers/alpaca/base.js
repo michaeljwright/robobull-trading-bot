@@ -266,7 +266,7 @@ const checkOrdersToBeProcessed = async (tradingProvider, stockData) => {
             })
             .then(async (res) => {
               // update orders if order successful
-              if (res.status == "accepted") {
+              if (res.status === "accepted" || res.status === "pending_new") {
                 // update order properties
                 order.processed = true;
                 order.dateTime = moment
@@ -310,6 +310,7 @@ const checkOrdersToBeProcessed = async (tradingProvider, stockData) => {
                   "info",
                   true
                 );
+                errors.log(res, "info", true);
               }
             })
             .catch((err) => {
@@ -320,6 +321,7 @@ const checkOrdersToBeProcessed = async (tradingProvider, stockData) => {
                 "info",
                 true
               );
+              errors.log(err, "info", true);
             });
         }
 
@@ -376,32 +378,38 @@ const updateSubcribedStocks = async (tradingProvider, stockData, client) => {
 
       // add current positions to stocks to be subscribed to
       if (positions.length > 0) {
-        stocks = _.union(stocks, _.map(positions, "symbol"));
+        stocks = _.take(
+          _.union(stocks, _.map(positions, "symbol")),
+          stockData.settings.stockDataLimit
+        );
       }
 
       if (stocks.length > 0) {
         // update stockData to keep current positions
-        await tradingStocks
-          .updateStockData(stocks, stockData)
-          .then((updatedStockData) => {
-            stockData = updatedStockData;
-            tradingStocks.subscribeToStocks(client, stocks, stockData.settings);
+        const updatedStockData = await tradingStocks.updateStockData(
+          tradingProvider,
+          stocks,
+          stockData
+        );
 
-            // sync position, calculate profit and write socket to frontend trading terminal
-            stockData = syncPortfolioPostions(
-              tradingProvider,
-              stockData,
-              positions
-            );
-          })
-          .catch((err) => {
-            errors.log(
-              "ERROR: ALPACA POSITIONS ON STOCKDATA UPDATE",
-              "info",
-              true
-            );
-            errors.log(err, "error");
-          });
+        if (updatedStockData) {
+          stockData = updatedStockData;
+          tradingStocks.subscribeToStocks(client, stocks, stockData.settings);
+
+          // sync position, calculate profit and write socket to frontend trading terminal
+          stockData = syncPortfolioPostions(
+            tradingProvider,
+            stockData,
+            positions
+          );
+        } else {
+          console.log("ERROR: ALPACA POSITIONS ON STOCKDATA UPDATE");
+          errors.log(
+            "ERROR: ALPACA POSITIONS ON STOCKDATA UPDATE",
+            "info",
+            true
+          );
+        }
       } else {
         errors.log("ERROR: NO NEW STOCKS TO SUBCRIBE TO", "info", true);
       }
@@ -703,27 +711,29 @@ const checkMarketOpen = async (tradingProvider, stockData) => {
   let isMarketOpen = true;
   let timeToClose;
 
-  await tradingProvider
-    .getClock()
-    .then(async (resp) => {
-      var closingTime = new Date(
-        resp.next_close.substring(0, resp.next_close.length - 6)
-      );
-      var currTime = new Date(
-        resp.timestamp.substring(0, resp.timestamp.length - 6)
-      );
-      timeToClose = Math.abs(closingTime - currTime);
+  if (!stockData.settings.enableCrypto) {
+    await tradingProvider
+      .getClock()
+      .then(async (resp) => {
+        var closingTime = new Date(
+          resp.next_close.substring(0, resp.next_close.length - 6)
+        );
+        var currTime = new Date(
+          resp.timestamp.substring(0, resp.timestamp.length - 6)
+        );
+        timeToClose = Math.abs(closingTime - currTime);
 
-      if (timeToClose < 60000 * 15 || resp.is_open === false) {
-        isMarketOpen = false;
+        if (timeToClose < 60000 * 15 || resp.is_open === false) {
+          isMarketOpen = false;
 
-        // Close all positions when 15 minutes til market close.
-        console.log("Market closing soon. Liquidating positions.");
-      }
-    })
-    .catch((err) => {
-      errors.log(err, "error");
-    });
+          // Close all positions when 15 minutes til market close.
+          console.log("Market closing soon. Liquidating positions.");
+        }
+      })
+      .catch((err) => {
+        errors.log(err, "error");
+      });
+  }
 
   return isMarketOpen;
 };

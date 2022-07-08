@@ -1,5 +1,3 @@
-const _ = require("lodash");
-
 const baseProvider = require("./base");
 const backtestProvider = require("./backtest");
 
@@ -36,11 +34,20 @@ const alpacaLive = async (settings, session, io) => {
   /* get array of stocks */
   const stocks = await tradingStocks.getStocks(settings);
 
-  // Check market is open first
   await trading
     .getClock()
     .then(async (res) => {
-      if (res.is_open) {
+      // Check market is open first (or crypto setting is enabled)
+      if (res.is_open || settings.enableCrypto) {
+        if (settings.enableCrypto) {
+          outputs.writeOutput(
+            "Crypto enabled",
+            "receive_market_closed",
+            io,
+            true
+          );
+        }
+
         trading.getAccount().then((account) => {
           if (account.pattern_day_trader) {
             console.log(
@@ -92,7 +99,9 @@ const alpacaLive = async (settings, session, io) => {
                   // loop through algos to create initial setup for each stock
                   stockData = tradingAlgos.initializeAlgos(stockData);
 
-                  const client = trading.data_stream_v2;
+                  const client = !settings.enableCrypto
+                    ? trading.data_stream_v2
+                    : trading.crypto_stream_v2;
 
                   client.onConnect(async () => {
                     tradingStocks.subscribeToStocks(client, stocks, settings);
@@ -147,19 +156,33 @@ const alpacaLive = async (settings, session, io) => {
                   });
 
                   client.onError((err) => {
-                    console.log(err);
+                    console.log("Trading client data error: ", err);
                   });
 
-                  client.onStockBar(async (data) => {
-                    if (stockData.haltTrading !== true) {
-                      // loop through algos for calculations
-                      stockData = tradingAlgos.calculateAlgos(
-                        trading,
-                        stockData,
-                        data
-                      );
-                    }
-                  });
+                  // loop through algos for calculations
+                  if (!settings.enableCrypto) {
+                    client.onStockBar(async (data) => {
+                      // console.log("Real-time market data: ", data);
+                      if (stockData.haltTrading !== true) {
+                        stockData = tradingAlgos.calculateAlgos(
+                          trading,
+                          stockData,
+                          data
+                        );
+                      }
+                    });
+                  } else {
+                    client.onCryptoBar(async (data) => {
+                      // console.log("Real-time market data: ", data);
+                      if (stockData.haltTrading !== true) {
+                        stockData = tradingAlgos.calculateAlgos(
+                          trading,
+                          stockData,
+                          data
+                        );
+                      }
+                    });
+                  }
 
                   client.onDisconnect(async () => {
                     console.log("Disconnected");
