@@ -1,6 +1,6 @@
 {
-  "thresholdToBuy": 35,
-  "thresholdToSell": 25,
+  "thresholdToBuy": 30,
+  "thresholdToSell": 20,
   "useStandardAlgos": false,
   "restrictons": [
     {
@@ -105,7 +105,7 @@
     "WMA": {
       "description": "Weighted Moving Average",
       "type": "movingAverage",
-      "enabled": true,
+      "enabled": false,
       "weighting": 5,
       "periods": [
         {
@@ -273,7 +273,7 @@
       "description": "Relative Strength Index",
       "type": "oscillator",
       "enabled": true,
-      "weighting": 10,
+      "weighting": 15,
       "periods": [
         {
           "name": "rsiPlot",
@@ -308,7 +308,7 @@
     "MFI": {
       "description": "Moneyflow Index",
       "type": "oscillator",
-      "enabled": true,
+      "enabled": false,
       "weighting": 10,
       "periods": [
         {
@@ -382,7 +382,7 @@
       "description": "Bollinger Bands",
       "type": "oscillator",
       "enabled": true,
-      "weighting": 5,
+      "weighting": 10,
       "periods": [
         {
           "name": "bbPlot",
